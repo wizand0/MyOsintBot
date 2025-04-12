@@ -88,6 +88,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Сбрасываем ранее установленный режим поиска
     context.user_data.pop('search_mode', None)
 
+
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
 
@@ -282,33 +283,11 @@ def perform_phone_search(search_query: str):
     return results
 
 
-# Пример функции отправки результатов форматированным сообщением
-# async def send_results_message(update: Update, text: str) -> None:
-#     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
-
-
 # Функция отправки ASCII-таблицы в сообщении (результат небольшой длины)
 async def send_results_message(update: Update, table: str) -> None:
     # Заворачиваем таблицу в тег <pre> для корректного отображения моноширинным шрифтом
     text_message = f"<pre>{table}</pre>"
     await update.message.reply_text(text_message, parse_mode=ParseMode.HTML)
-
-
-# Пример функции сохранения результатов в HTML-файл
-# Функция может быть синхронной, поэтому мы вызываем её через asyncio.to_thread
-# def save_results_as_html(results: list) -> str:
-#     file_path = "results.html"
-#     with open(file_path, "w", encoding="utf-8") as f:
-#         f.write("<html><head><meta charset='utf-8'></head><body>")
-#         f.write("<h2>Результаты поиска</h2>")
-#         for row in results:
-#             # Для каждой строки выводим таблицу и пары ключ: значение
-#             table_name = row.get('table_name', 'unknown')
-#             f.write(f"<p><strong>{table_name}</strong>: ")
-#             row_data = " | ".join(f"{key}: {value}" for key, value in row.items() if key != 'table_name')
-#             f.write(f"{row_data}</p>")
-#         f.write("</body></html>")
-#     return file_path
 
 
 # Функция сохранения результатов в HTML-файл
@@ -336,45 +315,6 @@ def build_ascii_table(results: list) -> str:
     return table_str
 
 
-# # Функция для формирования HTML-таблицы
-# def build_html_table(results: list) -> str:
-#     """
-#     Строит HTML-страницу с таблицей результатов и базовой стилизацией.
-#     """
-#     html = """
-#     <html>
-#       <head>
-#         <meta charset='utf-8'>
-#         <style>
-#           table { border-collapse: collapse; width: 100%; }
-#           th, td { border: 1px solid #dddddd; text-align: left; padding: 8px; }
-#           th { background-color: #f2f2f2; }
-#           tr:nth-child(even) { background-color: #f9f9f9; }
-#         </style>
-#       </head>
-#       <body>
-#         <h2>Результаты поиска</h2>
-#         <table>
-#           <thead>
-#             <tr>
-#               <th>Table Name</th>
-#               <th>Record</th>
-#             </tr>
-#           </thead>
-#           <tbody>
-#     """
-#     for r in results:
-#         table_name = r.get('table_name', 'unknown')
-#         record = " | ".join(f"{k}: {v}" for k, v in r.items() if k != 'table_name')
-#         html += f"<tr><td>{table_name}</td><td>{record}</td></tr>"
-#     html += """
-#           </tbody>
-#         </table>
-#       </body>
-#     </html>
-#     """
-#     return html
-
 def build_html_table(results: list) -> str:
     """
     Строит одну большую HTML-таблицу, в которой записи сгруппированы по именам таблиц.
@@ -389,7 +329,7 @@ def build_html_table(results: list) -> str:
     второй и т.д.
     """
 
-# Группируем записи по полю 'table_name'
+    # Группируем записи по полю 'table_name'
     groups = {}
     for row in results:
         table_name = row.get('table_name', 'unknown')
