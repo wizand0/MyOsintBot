@@ -12,7 +12,6 @@ DB_NAME=bd_name
 DB_PORT=3306
 ALLOWED_USERS=123456789, 987654321
 
-
 # Для MariaDB
 MYSQL_ROOT_PASSWORD=root_password
 MYSQL_DATABASE=SAME_AS_DB_HOST
@@ -41,6 +40,7 @@ MyBot/
 │   └── bot.py        # основной код бота
 ├── Dockerfile        # сборка образа для бота
 ├── requirements.txt  # зависимости Python
+├── docker-compose.yml
 └── README.md
 ```
 
