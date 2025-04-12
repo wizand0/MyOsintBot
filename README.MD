@@ -121,11 +121,14 @@ docker run -d --name mybot_container mybot:latest
 ```
 docker exec -it mariadb_server bash
 ```
-
+3a. Установите клиент MariaDB
+```
+apt-get update && apt-get install mariadb-client
+```
 4.  Запустите клиент MariaDB:  
    Внутри контейнера выполните:
    ```
-   mysql -u root -p
+   mariadb -u root -p
    ```
    При появлении запроса введите пароль:  
    ```
@@ -158,15 +161,30 @@ MariaDB [(none)]>).
 
 ## Если где-то ошибиблись при разработке, то в каталоге проекта:
 ### 1. Сбросить контейнеры:
-docker-compose down -v
-### 2. Запустить их заново:
-docker-compose up -d
-
-## Импорт нескольких дампов файлов из каталога:
-Если файлов дампов несколько, использовать цикл в shell для последовательного выполнения команды для каждого файла с расширением .sql в текущем каталоге. Например, в bash это можно сделать так:
 ```
-for file in *.sql; do
-  echo "Импорт файла ${file}"
-  docker exec -i mariadb_server mysql -u root -p"your_root_password" osint_bd < "${file}"
-done
+docker-compose down -v
+```
+### 2. Запустить их заново:
+```
+docker-compose up -d
+```
+
+p.s. Если у вас есть несколько дампов БД в формате *.sql определенном каталоге, скопируйте в этот каталог файл из проекта 
+для windows:
+```
+import_all_sql.ps1
+```
+для linux:
+```
+import_all_sql.sh
+```
+и запустите его:
+для windows в powerShell:
+```
+.\import_all_sql.ps1
+```
+для linux:
+```
+chmod +x import_all_sql.sh
+.\import_all_sql.sh
 ```

@@ -13,7 +13,7 @@ services:
       - app-network
 
   db:
-    image: mariadb:10.6
+    image: mariadb
     container_name: mariadb_server
     restart: always
     env_file:
