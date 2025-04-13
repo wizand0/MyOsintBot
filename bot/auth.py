@@ -1,4 +1,4 @@
-from config import ALLOWED_USERS
+from .config import ALLOWED_USERS
 
 
 # Функция проверки прав пользователя

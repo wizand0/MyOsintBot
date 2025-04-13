@@ -1,5 +1,5 @@
-from bot.config import DB_CONFIG, logger
-from bot.db import get_db_connection
+from .config import DB_CONFIG, logger
+from .db import get_db_connection
 
 
 def perform_general_search(search_query: str):

@@ -5,8 +5,8 @@ from telegram.ext import (
     filters,
 )
 
-from config import TOKEN, logger
-from handlers import start, message_handler
+from .config import TOKEN, logger
+from .handlers import start, message_handler
 
 
 def main() -> None:

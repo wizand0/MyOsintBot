@@ -3,10 +3,10 @@ import asyncio
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from auth import is_authorized
-from config import logger
-from search import perform_general_search, perform_phone_search
-from table_utils import send_results_message, save_results_as_html
+from .auth import is_authorized
+from .config import logger
+from .search import perform_general_search, perform_phone_search
+from .table_utils import send_results_message, save_results_as_html
 
 
 # Обработчик команды /start – вывод меню

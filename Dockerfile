@@ -10,10 +10,12 @@ WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем исходники бота
-COPY bot/ /app/
+# COPY bot/ /app/
+COPY bot /app/bot
 
 # Если переменные окружения для бота хранятся в .env, их можно добавить при запуске контейнера через docker-compose
 # Либо можно загрузить их внутри контейнера с помощью библиотеки python-dotenv (если она указана в requirements)
 
 # Запускаем бота
-CMD ["python", "bot.py"]
+# CMD ["python", "bot.py"]
+CMD ["python", "-m", "bot.main"]
