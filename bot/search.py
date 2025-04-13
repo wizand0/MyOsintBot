@@ -1,3 +1,5 @@
+# search.py
+
 from .config import DB_CONFIG, logger
 from .db import get_db_connection
 

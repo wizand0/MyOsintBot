@@ -3,6 +3,7 @@ FROM python
 
 # Обновляем пакеты и устанавливаем дополнительные зависимости, если они нужны
 RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install mariadb-client -y --no-install-recommends
 
 # Копируем файл requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/requirements.txt
