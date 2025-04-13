@@ -34,20 +34,23 @@ MYSQL_PASSWORD=your_password_same_as_DB_PASSWORD
 
 У вас уже есть следующая структура проекта:
 ```
-MyOsintBot/
+MyBot/
 ├── Dockerfile
 ├── README.MD
 ├── bot
-│   ├── auth.py # - Авторизация (todo)
-│   ├── .env
+│   ├── __init__.py
+│   ├── __pycache__
+│   ├── auth.py
 │   ├── config.py # - Настройки
+│   ├── data.py
 │   ├── db.py # - Работа с БД
 │   ├── handlers.py
-│   ├── main.py # - Основной файл запуска бота
+│   ├── main.py
 │   ├── search.py # - Логика поиска (todo)
-│   └── table_utils.py # - Формат исходящих данных
+│   ├── table_utils.py # - Формат исходящих данных
+│   └── utils.py
 ├── docker-compose.yml
-├── import_all_sql.ps1 # - Импорт всех дампов в текущем каталоге (windows)
+├── import_all_sql.bat # - Импорт всех дампов в текущем каталоге (windows)
 ├── import_all_sql.sh # - Импорт всех дампов в текущем каталоге (linux)
 └── requirements.txt
 ```
