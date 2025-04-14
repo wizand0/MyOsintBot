@@ -7,24 +7,19 @@ from telegram.ext import (
     filters, CallbackQueryHandler,
 )
 
-from .config import TOKEN, logger
-from .handlers import start, message_handler, approve_user, language_selection_handler
+from .handlers.common_handlers import callback_handler
+from .handlers.admin_handlers import approve_user
+from .handlers.language_handlers import language_selection_handler, change_language_handler
+from .handlers.user_handlers import message_handler
+from .handlers.user_handlers import start
+from .config import TOKEN
+
+# from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
+#     callback_handler
 
 
-# def main() -> None:
-#     application = ApplicationBuilder().token(TOKEN).build()
-#
-#     application.add_handler(CommandHandler("start", start))
-#     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-#
-#     logger.info("Бот запущен")
-#     application.run_polling()
-#
-#
-# if __name__ == '__main__':
-#     main()
 
-
+# Код до рефакторинга handlers.py в отдельные файлы
 def main():
     application = ApplicationBuilder().token(TOKEN).build()
     # Обработчик команды /start
@@ -34,7 +29,12 @@ def main():
     # Обработка всех текстовых сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     # Регистрируем обработчик на CallbackQuery для выбора языка
-    application.add_handler(CallbackQueryHandler(language_selection_handler))
+    # Регистрируем обработчик для выбора языка ('ru' или 'en')
+    application.add_handler(CallbackQueryHandler(language_selection_handler, pattern="^(ru|en)$"))
+    # Регистрируем обработчик для смены языка (callback_data = "change_language")
+    application.add_handler(CallbackQueryHandler(change_language_handler, pattern="^change_language$"))
+    # Регистрируем обработчики команд и callback query
+    application.add_handler(CallbackQueryHandler(callback_handler))
 
     # Запуск бота
     application.run_polling()

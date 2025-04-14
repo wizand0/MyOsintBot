@@ -42,6 +42,8 @@ texts = {
         'user_amount': "Количество авторизованных пользователей",
         'no_new_application': "Нет новых заявок",
         'new_applications': "Новые заявки",
+        'change_language': 'Сменить язык',
+        'choose_language': 'Выберите язык:'
     },
     'en': {
         'choose_language_start': "Please choose a language by executing /start",
@@ -86,5 +88,7 @@ texts = {
         'user_amount': "Number of authorized users",
         'no_new_application': "No new applications",
         'new_applications': "New applications",
+        'change_language': 'Change language',
+        'choose_language': 'Choose language:'
     }
 }

@@ -1,4 +1,7 @@
 # MyBot - Телеграм бот для поиска информации в базах данных MySQL (MariaDB)
+
+## Ru, En - Localization
+
 ## Первичная настройка бота
 1. В каталоге проекта создать файл .env:
 ```
@@ -37,14 +40,22 @@ MYSQL_PASSWORD=your_password_same_as_DB_PASSWORD
 MyBot/
 ├── Dockerfile
 ├── README.MD
+├── README1.md
 ├── bot
 │   ├── __init__.py
-│   ├── __pycache__
+│   ├── _handlers.py
 │   ├── auth.py
 │   ├── config.py # - Настройки
 │   ├── data.py
 │   ├── db.py # - Работа с БД
-│   ├── handlers.py
+│   ├── handlers
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   ├── admin_handlers.py
+│   │   ├── common_handlers.py
+│   │   ├── language_handlers.py
+│   │   └── user_handlers.py
+│   ├── language_texts.py
 │   ├── main.py
 │   ├── search.py # - Логика поиска (todo)
 │   ├── table_utils.py # - Формат исходящих данных
@@ -52,7 +63,8 @@ MyBot/
 ├── docker-compose.yml
 ├── import_all_sql.bat # - Импорт всех дампов в текущем каталоге (windows)
 ├── import_all_sql.sh # - Импорт всех дампов в текущем каталоге (linux)
-└── requirements.txt
+├── requirements.txt
+└── user_settings.json
 ```
 
 Особенности:
