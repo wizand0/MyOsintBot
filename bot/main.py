@@ -4,11 +4,11 @@ from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
     MessageHandler,
-    filters,
+    filters, CallbackQueryHandler,
 )
 
 from .config import TOKEN, logger
-from .handlers import start, message_handler, approve_user
+from .handlers import start, message_handler, approve_user, language_selection_handler
 
 
 # def main() -> None:
@@ -33,6 +33,8 @@ def main():
     application.add_handler(CommandHandler("approve", approve_user))
     # Обработка всех текстовых сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+    # Регистрируем обработчик на CallbackQuery для выбора языка
+    application.add_handler(CallbackQueryHandler(language_selection_handler))
 
     # Запуск бота
     application.run_polling()
