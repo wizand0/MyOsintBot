@@ -1,7 +1,10 @@
 # db.py
+import json
+import os
 
 import mysql.connector
 from mysql.connector import Error
+
 from .config import DB_CONFIG
 
 

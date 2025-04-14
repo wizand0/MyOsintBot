@@ -3,6 +3,8 @@ import os
 import logging
 from dotenv import load_dotenv
 
+from .data import load_allowed_users, save_allowed_users
+
 # Загружаем переменные из файла .env
 load_dotenv()
 
@@ -21,11 +23,23 @@ DB_CONFIG = {
 }
 
 # Получаем список разрешенных пользователей из переменных окружения
-allowed_users_str = os.getenv('ALLOWED_USERS', '')
-ALLOWED_USERS = set()
-if allowed_users_str:
+# allowed_users_str = os.getenv('ALLOWED_USERS', '')
+# ALLOWED_USERS = set()
+# if allowed_users_str:
     # Преобразуем строку вида "123456789,987654321" в множество чисел
-    ALLOWED_USERS = {int(x.strip()) for x in allowed_users_str.split(',') if x.strip()}
+    # ALLOWED_USERS = {int(x.strip()) for x in allowed_users_str.split(',') if x.strip()}
+
+
+
 
 # Считываем идентификатор администратора
 ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
+
+# Получаем пользователей из файла
+ALLOWED_USERS = load_allowed_users()
+if not ALLOWED_USERS:
+    # Если файл пустой или отсутствует, берем из .env
+    ALLOWED_USERS = [int(uid.strip()) for uid in os.getenv("ALLOWED_USERS", "").split(',') if uid.strip().isdigit()]
+    if ADMIN_ID not in ALLOWED_USERS:
+        ALLOWED_USERS.append(ADMIN_ID)
+    save_allowed_users(ALLOWED_USERS)

@@ -43,7 +43,10 @@ texts = {
         'no_new_application': "Нет новых заявок",
         'new_applications': "Новые заявки",
         'change_language': 'Сменить язык',
-        'choose_language': 'Выберите язык:'
+        'choose_language': 'Выберите язык:',
+        'db_stats': 'Статистика БД',
+        'server_stats': 'Характеристики сервера',
+        'user_requests': 'Запросы пользователей',
     },
     'en': {
         'choose_language_start': "Please choose a language by executing /start",
@@ -89,6 +92,9 @@ texts = {
         'no_new_application': "No new applications",
         'new_applications': "New applications",
         'change_language': 'Change language',
-        'choose_language': 'Choose language:'
+        'choose_language': 'Choose language:',
+        'db_stats': 'DB Statistics',
+        'server_stats': 'Server Statistics',
+        'user_requests': 'User Requests',
     }
 }

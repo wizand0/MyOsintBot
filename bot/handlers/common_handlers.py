@@ -5,7 +5,7 @@ import os
 from telegram import Update, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton
 from telegram.ext import ContextTypes
 
-from .admin_handlers import show_pending_requests, show_users_count
+from .admin_handlers import show_users_count, show_pending_requests
 from ..auth import is_authorized, is_admin
 from ..config import logger
 from ..language_texts import texts
@@ -54,6 +54,10 @@ def build_menu_keyboard(user_lang: str, user_id: int) -> ReplyKeyboardMarkup:
             [
                 KeyboardButton(text=texts[user_lang]['new_requests']),
                 KeyboardButton(text=texts[user_lang]['user_count'])
+            ],
+            [
+                KeyboardButton(text=texts[user_lang].get('db_stats', 'Статистика БД')),
+                KeyboardButton(text=texts[user_lang].get('server_stats', 'Характеристики сервера'))
             ]
         ]
     # Формируем клавиатуру для авторизованного пользователя

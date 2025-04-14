@@ -6,7 +6,7 @@ import asyncio
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
-from .admin_handlers import show_pending_requests, show_users_count
+from .admin_handlers import show_pending_requests, show_users_count, db_statistics, server_statistics
 from .common_handlers import build_menu_keyboard
 from ..auth import is_authorized, is_admin
 from ..config import logger
@@ -74,6 +74,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         if text == texts[lang].get("user_count", "количество пользователей").lower():
             await show_users_count(update, context)
+            return
+
+        if text == texts[lang].get("db_stats", "статистика БД").lower():
+            await db_statistics(update, context)
+            return
+
+        if text == texts[lang].get("server_stats", "характеристики сервера").lower():
+            await server_statistics(update, context)
             return
 
     # Проверка авторизации пользователя
