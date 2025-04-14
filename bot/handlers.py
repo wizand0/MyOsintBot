@@ -107,7 +107,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
-        await update.message.reply_text("Пожалуйста, выберите язык, выполнив /start")
+        await update.message.reply_text("Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start")
         return
 
     # Получаем выбранный язык
@@ -220,14 +220,18 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         context.user_data.pop('search_mode', None)
     else:
         await update.message.reply_text(
-            "Пожалуйста, выберите команду из меню или используйте /start для повторного вызова меню."
-        )
+            texts[lang].get("enter_right_command", "Пожалуйста, выберите команду из меню или используйте /start для повторного вызова меню.")
+                                        )
 
 
 async def show_pending_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    text = update.message.text.strip().lower()
+
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
-        await update.message.reply_text("Пожалуйста, выберите язык, выполнив /start")
+        await update.message.reply_text(
+            "Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start")
         return
 
     # Получаем выбранный язык
@@ -240,19 +244,24 @@ async def show_pending_requests(update: Update, context: ContextTypes.DEFAULT_TY
     from .data import pending_requests  # импортируем список заявок
 
     if not pending_requests:
-        await update.message.reply_text("Нет новых заявок.")
+        await update.message.reply_text(texts[lang].get("no_new_application", "Нет новых заявок."))
         return
 
     # Отправляем администратору список заявок
     requests_list = "\n".join(str(uid) for uid in pending_requests)
-    await update.message.reply_text(f"Новые заявки:\n{requests_list}")
+    text1 = texts[lang].get("new_applications", "Новые заявки")
+    await update.message.reply_text(f"{text1}:\n{requests_list}")
 
 
 # команды авторизации пользователя администратором
 async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    text = update.message.text.strip().lower()
+
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
-        await update.message.reply_text("Пожалуйста, выберите язык, выполнив /start")
+        await update.message.reply_text(
+            "Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start")
         return
 
     # Получаем выбранный язык
@@ -267,29 +276,35 @@ async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     try:
         applicant_id = int(context.args[0])
     except (IndexError, ValueError):
-        await update.message.reply_text("Укажите корректный id пользователя. Пример: /approve 123456789")
+        await update.message.reply_text(texts[lang].get("approve_user", "Укажите корректный id пользователя. Пример: /approve 123456789"))
         return
 
     if applicant_id in pending_requests:
         pending_requests.remove(applicant_id)
         # Добавляем пользователя в список разрешённых. При желании можно обновить файл или базу данных
         ALLOWED_USERS.add(applicant_id)
-        await update.message.reply_text(f"Пользователь {applicant_id} успешно авторизован.")
+        text1 = texts[lang].get("user", "Пользователь")
+        text2 = texts[lang].get("is_authorizied", "успешно авторизован")
+        await update.message.reply_text(f"{text1} {applicant_id} {text2}.")
         # Опционально: уведомляем пользователя об успешной авторизации
         try:
             await context.bot.send_message(chat_id=applicant_id,
-                                           text="Ваша заявка одобрена. Теперь вы можете пользоваться ботом.")
+                                           text=texts[lang].get("your_request_approved", "Ваша заявка одобрена. Теперь вы можете пользоваться ботом."))
         except Exception as e:
             logger.error(f"Ошибка уведомления пользователя: {e}")
     else:
-        await update.message.reply_text("Пользователь с таким id не найден в заявках.")
+        await update.message.reply_text(texts[lang].get("no_user_found", "Пользователь с таким id не найден в заявках."))
 
 
 #  обработчик для команды «Количество пользователей»
 async def show_users_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.effective_user.id
+    text = update.message.text.strip().lower()
+
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
-        await update.message.reply_text("Пожалуйста, выберите язык, выполнив /start")
+        await update.message.reply_text(
+            "Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start")
         return
 
     # Получаем выбранный язык
@@ -301,4 +316,5 @@ async def show_users_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return
 
     count = len(ALLOWED_USERS)
-    await update.message.reply_text(f"Количество авторизованных пользователей: {count}")
+    text1 = texts[lang].get("user_amount", "Количество авторизованных пользователей")
+    await update.message.reply_text(f"{text1}: {count}")
