@@ -4,12 +4,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    privileged: true
+    cap_add:
+      - SYS_RAWIO
     container_name: myosint_bot
     restart: always
     depends_on:
       - db
     env_file:
       - ./bot/.env
+    volumes:
+      - /proc/loadavg:/host_loadavg:ro
+      - /proc/uptime:/host_uptime:ro
+# !!!!!!!!!!! Раскомментировать в Linux
+#      - /sys/class/hwmon:/host_sys/class/hwmon:ro
     networks:
       - app-network
 

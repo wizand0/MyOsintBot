@@ -1,4 +1,4 @@
-# admin_handlers.py
+# admin_MyOsintBot/bot/handlers/admin_handlers.py
 import psutil
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -183,22 +183,68 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     Получает характеристики сервера, такие как загрузка CPU и температура.
     """
     lang = context.user_data.get('language', 'ru')
+    # cpu_percent = psutil.cpu_percent(interval=1)
+    # # Получаем температуры (учтите, что на некоторых системах функция может вернуть {}
+    # temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
+    # temp_message = ""
+    # if temps:
+    #     # Перебираем доступные датчики
+    #     for name, entries in temps.items():
+    #         for entry in entries:
+    #             temp_message += f"{name} ({entry.label or 'temp'}): {entry.current}°C\n"
+    # else:
+    #     temp_message = "Информация о температуре недоступна."
+    #
+    # message = (
+    #     f"Характеристики сервера:\n"
+    #     f"• Загрузка CPU: {cpu_percent}%\n"
+    #     f"• Температура:\n{temp_message}"
+    # )
+    # # await update.effective_message.edit_text(message)
+    # await update.effective_message.reply_text(message)
+
+    # Получаем загрузку CPU
     cpu_percent = psutil.cpu_percent(interval=1)
-    # Получаем температуры (учтите, что на некоторых системах функция может вернуть {}
+
+    # Читаем uptime с хоста (если потребуется)
+    try:
+        with open('/host_uptime', 'r') as f:
+            uptime_val = float(f.readline().split()[0])
+    except Exception:
+        uptime_val = None
+
+    # Получаем температуры
     temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
     temp_message = ""
     if temps:
-        # Перебираем доступные датчики
-        for name, entries in temps.items():
+        for sensor_name, entries in temps.items():
             for entry in entries:
-                temp_message += f"{name} ({entry.label or 'temp'}): {entry.current}°C\n"
+                temp_message += f"{sensor_name} ({entry.label or 'temp'}): {entry.current}°C\n"
     else:
         temp_message = "Информация о температуре недоступна."
 
     message = (
         f"Характеристики сервера:\n"
         f"• Загрузка CPU: {cpu_percent}%\n"
-        f"• Температура:\n{temp_message}"
+        f"• Uptime: {uptime_val:.0f} секунд\n" if uptime_val is not None else ""
+                                                                              f"• Температура:\n{temp_message}"
     )
-    # await update.effective_message.edit_text(message)
+
     await update.effective_message.reply_text(message)
+
+
+def read_uptime(uptime_path='/host_uptime'):
+    try:
+        with open(uptime_path, 'r') as f:
+            uptime_value = f.readline().split()[0]
+            return float(uptime_value)
+    except Exception as e:
+        return None
+
+def read_loadavg(loadavg_path='/host_loadavg'):
+    try:
+        with open(loadavg_path, 'r') as f:
+            content = f.read().strip()
+            return content  # Или попарсить данные по необходимости
+    except Exception as e:
+        return None
