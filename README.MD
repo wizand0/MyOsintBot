@@ -16,6 +16,13 @@
 [Helps for Docker - EN](docs/en_docker.md)<br>
 [Some instruments - EN](docs/en_helps.md)<br>
 
+The following screenshots illustrate key parts of the application:
+
+|             Main screen              |
+|:------------------------------------:|
+| ![screenshot](images/screenshot.png) |
+
+
 ▎English
 
 ▎Overview
