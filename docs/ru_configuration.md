@@ -12,63 +12,58 @@
 
 ---
 
+## Первичная настройка бота
+1. В каталоге проекта создать файл .env:
+```
+# .env
+# Для бота
+TOKEN=YOUR_TOKEN
+DB_HOST=mariadb_server
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=bd_name
+DB_PORT=3306
+ALLOWED_USERS=123456789, 987654321
+
+# Для MariaDB
+MYSQL_ROOT_PASSWORD=root_password
+MYSQL_DATABASE=SAME_AS_DB_HOST
+MYSQL_USER=your_username_same_as_DB_USER
+MYSQL_PASSWORD=your_password_same_as_DB_PASSWORD
+```
+
 3. Подготовка проекта
 
 У вас уже есть следующая структура проекта:
 ```
 MyBot/
-├── .gitignore
 ├── Dockerfile
 ├── README.MD
-├── bot/
-    ├── __init__.py
-    ├── __pycache__/
-    ├── _handlers.py
-        ├── def load_user_settings
-        ├── def save_user_settings
-        ├── def build_menu_keyboard
-        ├── def send_message
-    ├── allowed_users.json
-    ├── auth.py
-        ├── def is_authorized
-        ├── def is_admin
-    ├── config.py
-    ├── data.py
-        ├── def load_allowed_users
-        ├── def save_allowed_users
-    ├── db.py
-        ├── def get_db_connection
-    ├── handlers/
-        ├── __init__.py
-        ├── __pycache__/
-        ├── admin_handlers.py
-            ├── def send_message
-        ├── common_handlers.py
-            ├── def load_user_settings
-            ├── def save_user_settings
-            ├── def build_menu_keyboard
-        ├── language_handlers.py
-        └── user_handlers.py
-    ├── language_texts.py
-    ├── main.py
-        ├── def main
-    ├── search.py
-        ├── def perform_general_search
-        ├── def perform_phone_search
-    ├── table_utils.py
-        ├── def save_results_as_html
-        ├── def build_ascii_table
-        ├── def build_html_table
-    └── utils.py
+├── README1.md
+├── bot
+│   ├── __init__.py
+│   ├── _handlers.py
+│   ├── auth.py
+│   ├── config.py # - Настройки
+│   ├── data.py
+│   ├── db.py # - Работа с БД
+│   ├── handlers
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   ├── admin_handlers.py
+│   │   ├── common_handlers.py
+│   │   ├── language_handlers.py
+│   │   └── user_handlers.py
+│   ├── language_texts.py
+│   ├── main.py
+│   ├── search.py # - Логика поиска (todo)
+│   ├── table_utils.py # - Формат исходящих данных
+│   └── utils.py
 ├── docker-compose.yml
-├── generate_tree.py
-    ├── def get_functions
-    ├── def load_ignore_spec
-    ├── def print_tree
-├── import_all_sql.bat
-├── import_all_sql.sh
+├── import_all_sql.bat # - Импорт всех дампов в текущем каталоге (windows)
+├── import_all_sql.sh # - Импорт всех дампов в текущем каталоге (linux)
 ├── requirements.txt
-├── structure.txt
+└── user_settings.json
 
 ```
 

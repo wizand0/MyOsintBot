@@ -1,42 +1,56 @@
-### Вариант 1. Использование команды `tree` в терминале (Linux / macOS / WSL)
-1. **Установка утилиты `tree`:**
-   - **Ubuntu/Debian:**  
-     ```bash
+Option 1. Using the tree command in the terminal (Linux / macOS / WSL)
+
+1. Installing the tree utility:  
+
+   • Ubuntu/Debian:  
+     ```
      sudo apt update && sudo apt install tree
      ```
-2. **Генерация дерева проекта:**
-   Перейдите в корневую папку вашего проекта и выполните команду:
-   ```bash
+
+2. Generating the project tree:  
+   Navigate to the root folder of your project and run the command:
+   ```
    tree -L 2 > README.md
    ```
-   Здесь:
-   - `-L 2` ограничивает глубину отображения до 2 уровней (при необходимости замените число на другое значение);
-   - `> README.md` сохраняет вывод в файл `README.md`. Если README.md уже существует, команда перезапишет его содержимое.
 
+   Here:
 
-Ниже один из подходов для автоматической генерации подобной структуры проекта с перечнем методов (функций) в файлах, которую можно вставить в файл Readme.md. Идея заключается в том, чтобы написать специальный Python-скрипт, который:
+   • -L 2 limits the displayed depth to 2 levels (replace the number with another value if necessary);
 
-1. Рекурсивно обходит папки и файлы проекта.
+   • > README.md saves the output to the file README.md. If README.md already exists, the command will overwrite its contents.
 
-2. Для каждого Python-файла с помощью модуля ast парсит его содержимое и извлекает определения функций (и, при необходимости, методов классов).
+---
 
-3. Формирует текстовую визуализацию в виде «дерева», которое можно вставить в Readme.md.
+Below is one approach for automatically generating a similar project structure, including a list of methods (functions) within files, which can be inserted into the Readme.md file. The idea is to write a specialized Python script that:
 
-Ниже приведён пример такого скрипта.
+1. Recursively traverses the folders and files of the project.
 
-▎Как использовать
+2. For each Python file, uses the ast module to parse its contents and extract the function definitions (and, if necessary, class methods).
 
-1. Разместите скрипт.  
-   Сохраните данный скрипт в файл, например, generate_tree.py в корне вашего проекта.
+3. Formats a textual visualization in the form of a "tree" that can be inserted into the Readme.md.
 
-2. Запустите скрипт.  
-   В терминале выполните команду:
+Below is an example of such a script.
+
+---
+
+▎How to Use
+
+1. Place the script.  
+   Save the script in a file—for example, generate_tree.py in the root of your project.
+
+2. Run the script.  
+   Execute the following command in the terminal:
    
    python generate_tree.py > structure.txt
    
-   В файле structure.txt будет сгенерировано дерево проекта со списком функций (вы можете сразу открыть этот файл, скопировать содержимое и вставить в Readme.md).
+   The file structure.txt will contain the generated project tree with the list of functions (you can immediately open this file, copy its contents, and paste them into Readme.md).
 
-3. Редактирование.  
-   Возможна небольшая доработка под ваши нужды. Например, можно выбирать, выводить ли функции только верхнего уровня или внутри классов, форматирование дерева и т.д.
+3. Editing.  
+   A small modification may be necessary for your needs. For example, you can choose to output functions only from the top level or also those inside classes, adjust the tree formatting, etc.
 
-## Если в корневой директории имеется файл .gitignore, то с его помощью исключаются файлы и папки, удовлетворяющие указанным правилам. Для разбора .gitignore удобно использовать пакет pathspec (https://pypi.org/project/pathspec/). Его можно установить командой pip install pathspec.
+---
+
+▎Note
+
+If there is a .gitignore file in the root directory, it will be used to exclude the files and folders that meet the specified rules. To parse .gitignore, it is convenient to use the pathspec package (https://pypi.org/project/pathspec/). You can install it by running:
+pip install pathspec
