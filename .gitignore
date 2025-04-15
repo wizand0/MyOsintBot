@@ -2,10 +2,16 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,venv,dotenv,pycharm+all
 
 ### dotenv ###
+.idea
+.git
 bot/.env
+bot/.venv
+.venv
+env
+
 results.html
 .bot/allowed_users.json
-.user_settings.json
+user_settings.json
 
 ### PyCharm+all ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider

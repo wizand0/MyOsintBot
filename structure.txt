@@ -1,0 +1,52 @@
+├── .gitignore
+├── Dockerfile
+├── README.MD
+├── bot/
+    ├── __init__.py
+    ├── __pycache__/
+    ├── _handlers.py
+        ├── def load_user_settings
+        ├── def save_user_settings
+        ├── def build_menu_keyboard
+        ├── def send_message
+    ├── allowed_users.json
+    ├── auth.py
+        ├── def is_authorized
+        ├── def is_admin
+    ├── config.py
+    ├── data.py
+        ├── def load_allowed_users
+        ├── def save_allowed_users
+    ├── db.py
+        ├── def get_db_connection
+    ├── handlers/
+        ├── __init__.py
+        ├── __pycache__/
+        ├── admin_handlers.py
+            ├── def send_message
+        ├── common_handlers.py
+            ├── def load_user_settings
+            ├── def save_user_settings
+            ├── def build_menu_keyboard
+        ├── language_handlers.py
+        └── user_handlers.py
+    ├── language_texts.py
+    ├── main.py
+        ├── def main
+    ├── search.py
+        ├── def perform_general_search
+        ├── def perform_phone_search
+    ├── table_utils.py
+        ├── def save_results_as_html
+        ├── def build_ascii_table
+        ├── def build_html_table
+    └── utils.py
+├── docker-compose.yml
+├── generate_tree.py
+    ├── def get_functions
+    ├── def load_ignore_spec
+    ├── def print_tree
+├── import_all_sql.bat
+├── import_all_sql.sh
+├── requirements.txt
+├── structure.txt
