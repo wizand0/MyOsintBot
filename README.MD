@@ -2,13 +2,13 @@
 
 ## Ru, En - Localization
 
-[Инструкция по использованию](usage.md)
+[Инструкция по использованию](docs/usage.md)
 
 ▎English
 
 ▎Overview
 
-MyOsintBot is a Telegram bot designed for OSINT (Open Source Intelligence) tasks. The bot provides a set of functions for authorized users and administrators to perform various searches and manage user settings. Its modular architecture ensures that functionalities such as authentication, handling different types of queries, and formatting search results are cleanly separated into individual modules. It is deployed via Docker and supports a range of OSINT features with an emphasis on usability and scalability.
+MyOsintBot is a Telegram bot designed for Mysql searching tasks. The bot provides a set of functions for authorized users and administrators to perform various searches and manage user settings. Its modular architecture ensures that functionalities such as authentication, handling different types of queries, and formatting search results are cleanly separated into individual modules. It is deployed via Docker and supports a range of OSINT features with an emphasis on usability and scalability.
 
 ▎Functionality and Capabilities
 
@@ -135,7 +135,7 @@ MyOsintBot is a Telegram bot designed for OSINT (Open Source Intelligence) tasks
 
 ▎Обзор
 
-MyOsintBot — это Telegram-бот, предназначенный для задач OSINT (разведка с использованием открытых источников). Бот предоставляет набор функций для авторизованных пользователей и администраторов, позволяющих выполнять различные поисковые операции и управлять настройками пользователей. Его модульная архитектура обеспечивает разделение функционала, такого как аутентификация, обработка запросов и форматирование результатов поиска, что упрощает дальнейшую разработку и поддержание проекта. Развёртывание осуществляется с помощью Docker, а акцент ставится на удобстве использования и масштабируемости.
+MyOsintBot — это Telegram-бот, предназначенный для задач поиска инфомрации в ваших базх данных MySQL. Бот предоставляет набор функций для авторизованных пользователей и администраторов, позволяющих выполнять различные поисковые операции и управлять настройками пользователей. Его модульная архитектура обеспечивает разделение функционала, такого как аутентификация, обработка запросов и форматирование результатов поиска, что упрощает дальнейшую разработку и поддержание проекта. Развёртывание осуществляется с помощью Docker, а акцент ставится на удобстве использования и масштабируемости.
 
 ▎Функциональность и возможности
 
