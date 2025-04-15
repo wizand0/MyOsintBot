@@ -2,6 +2,137 @@
 
 ## Ru, En - Localization
 
+[Инструкция по использованию](usage.md)
+
+▎English
+
+▎Overview
+
+MyOsintBot is a Telegram bot designed for OSINT (Open Source Intelligence) tasks. The bot provides a set of functions for authorized users and administrators to perform various searches and manage user settings. Its modular architecture ensures that functionalities such as authentication, handling different types of queries, and formatting search results are cleanly separated into individual modules. It is deployed via Docker and supports a range of OSINT features with an emphasis on usability and scalability.
+
+▎Functionality and Capabilities
+
+1. User and Admin Authentication  
+
+   • The auth.py module contains functions for user authorization:
+
+     • is_authorized: Checks if a user is allowed to access the bot.
+
+     • is_admin: Determines if the current user has administrative privileges.
+
+   • Additionally, allowed_users.json stores the list of permitted users.
+
+2. User Settings and Menu Interaction  
+
+   • Handlers in handlers.py and commonhandlers.py include:
+
+     • load_user_settings and save_user_settings: Manage user-specific settings.
+
+     • build_menu_keyboard: Constructs interactive menu keyboards for users.
+
+   • The bot utilizes language texts provided in language_texts.py to offer localized user interfaces.
+
+3. Search Capabilities  
+
+   • The search.py module offers advanced search functions:
+
+     • perform_general_search: Conducts general OSINT data searches.
+
+     • perform_phone_search: Executes searches specifically related to phone numbers.
+
+   • The bot collates search results and offers them in both textual and tabulated formats.
+
+4. Data Presentation  
+
+   • The table_utils.py module provides utilities to convert result data into human-readable formats:
+
+     • build_ascii_table: Generates a text table view.
+
+     • build_html_table and save_results_as_html: Create HTML representations of the data.
+
+   
+5. Database Integration  
+
+   • Through db.py, the bot establishes database connections using get_db_connection to store or retrieve data essential for the OSINT operations.
+
+6. Modular Handlers for Specific Tasks  
+
+   • The handlers directory includes:
+
+     • admin_handlers.py for management operations.
+
+     • user_handlers.py for general user operations.
+
+     • language_handlers.py for language-specific actions.
+
+   • This structure enables the bot to separate functionality according to user roles and internationalization needs.
+
+7. Utility Functions and Configuration  
+
+   • Utility functions found in utils.py assist in various general tasks.
+
+   • The config.py file holds configuration settings, ensuring the bot can be easily adjusted for different environments.
+
+8. Deployment and Setup  
+
+   • The project is containerized with Dockerfile and uses docker-compose.yml for easy multi-container orchestration.
+
+   • For database setup, scripts like importallsql.sh and importallsql.bat automate the import of necessary SQL files.
+
+9. Project Maintenance and Code Inspection  
+
+   • Tools like generate_tree.py help in visualizing the project structure and extracting function definitions.
+
+   • The project includes a .gitignore ensuring that unnecessary files (log files, caches, etc.) are excluded from version control.
+
+▎Usage Instructions
+
+1. Installation and Setup  
+
+   • Install the required dependencies by running:
+     
+     pip install -r requirements.txt
+     
+
+   • Build the Docker container using:
+     
+     docker build -t myosintbot .
+     
+
+   • Alternatively, use docker-compose:
+     
+     docker-compose up --build
+     
+
+   
+2. Configuration
+• Adjust settings in config.py according to your environment.
+
+   • Update allowed_users.json with the list of authorized Telegram user IDs.
+
+   
+3. Running the Bot  
+
+   • The main entry point is in bot/main.py. Ensure you run the script (or the Docker container) in the appropriate context:
+     
+     python bot/main.py
+     
+
+   
+4. Interacting with the Bot  
+
+   • Once the bot is running, interact with it on Telegram:
+
+     • Use the provided commands to perform OSINT searches.
+
+     • Admins can use additional commands to manage the bot and user settings.
+
+   
+5. Extending Functionality  
+
+   • Developers can add new handlers or utilities by following the existing module structure. New functionalities should integrate seamlessly due to the modular design.
+
+
 ▎Обзор
 
 MyOsintBot — это Telegram-бот, предназначенный для задач OSINT (разведка с использованием открытых источников). Бот предоставляет набор функций для авторизованных пользователей и администраторов, позволяющих выполнять различные поисковые операции и управлять настройками пользователей. Его модульная архитектура обеспечивает разделение функционала, такого как аутентификация, обработка запросов и форматирование результатов поиска, что упрощает дальнейшую разработку и поддержание проекта. Развёртывание осуществляется с помощью Docker, а акцент ставится на удобстве использования и масштабируемости.
