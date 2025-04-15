@@ -9,6 +9,7 @@ bot/.venv
 .venv
 env
 structure.txt
+user_settings.json
 
 results.html
 .bot/allowed_users.json
