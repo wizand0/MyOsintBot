@@ -2,7 +2,11 @@
 
 ## Ru, En - Localization
 
-[Инструкция по использованию](docs/usage.md)
+[Инструкция по использованию - RU](docs/ru_usage.md)<br>
+[Запуск и настройка - RU](docs/ru_configuration.md)<br>
+[Работа с БД MySQL - RU](docs/ru_db.md)<br>
+[Полезное и работа c контейнерами Docker - RU](docs/ru_docker.md)<br>
+[Полезные инструменты - RU](docs/ru_helps.md)<br>
 
 ▎English
 
@@ -295,33 +299,59 @@ MYSQL_PASSWORD=your_password_same_as_DB_PASSWORD
 У вас уже есть следующая структура проекта:
 ```
 MyBot/
+├── .gitignore
 ├── Dockerfile
 ├── README.MD
-├── README1.md
-├── bot
-│   ├── __init__.py
-│   ├── _handlers.py
-│   ├── auth.py
-│   ├── config.py # - Настройки
-│   ├── data.py
-│   ├── db.py # - Работа с БД
-│   ├── handlers
-│   │   ├── __init__.py
-│   │   ├── __pycache__
-│   │   ├── admin_handlers.py
-│   │   ├── common_handlers.py
-│   │   ├── language_handlers.py
-│   │   └── user_handlers.py
-│   ├── language_texts.py
-│   ├── main.py
-│   ├── search.py # - Логика поиска (todo)
-│   ├── table_utils.py # - Формат исходящих данных
-│   └── utils.py
+├── bot/
+    ├── __init__.py
+    ├── __pycache__/
+    ├── _handlers.py
+        ├── def load_user_settings
+        ├── def save_user_settings
+        ├── def build_menu_keyboard
+        ├── def send_message
+    ├── allowed_users.json
+    ├── auth.py
+        ├── def is_authorized
+        ├── def is_admin
+    ├── config.py
+    ├── data.py
+        ├── def load_allowed_users
+        ├── def save_allowed_users
+    ├── db.py
+        ├── def get_db_connection
+    ├── handlers/
+        ├── __init__.py
+        ├── __pycache__/
+        ├── admin_handlers.py
+            ├── def send_message
+        ├── common_handlers.py
+            ├── def load_user_settings
+            ├── def save_user_settings
+            ├── def build_menu_keyboard
+        ├── language_handlers.py
+        └── user_handlers.py
+    ├── language_texts.py
+    ├── main.py
+        ├── def main
+    ├── search.py
+        ├── def perform_general_search
+        ├── def perform_phone_search
+    ├── table_utils.py
+        ├── def save_results_as_html
+        ├── def build_ascii_table
+        ├── def build_html_table
+    └── utils.py
 ├── docker-compose.yml
-├── import_all_sql.bat # - Импорт всех дампов в текущем каталоге (windows)
-├── import_all_sql.sh # - Импорт всех дампов в текущем каталоге (linux)
+├── generate_tree.py
+    ├── def get_functions
+    ├── def load_ignore_spec
+    ├── def print_tree
+├── import_all_sql.bat
+├── import_all_sql.sh
 ├── requirements.txt
-└── user_settings.json
+├── structure.txt
+
 ```
 
 Особенности:
@@ -392,164 +422,6 @@ docker run -d --name mybot_container mybot:latest
   ```
   docker exec -it mybot_container /bin/sh
   ```
-
-
-## Импорт базы данных
-1. Проверка есть ли таблицы в БД:
-2. Откройте PowerShell или другую консоль на Windows.
-3. Подключитесь к контейнеру, запустив интерактивный терминал:  
-```
-docker exec -it mariadb_server bash
-```
-3a. Установите клиент MariaDB
-```
-apt-get update && apt-get install mariadb-client
-```
-4.  Запустите клиент MariaDB:  
-   Внутри контейнера выполните:
-   ```
-   mariadb -u root -p
-   ```
-   При появлении запроса введите пароль:  
-   ```
-   [Root Password]
-   ```
-   После успешного ввода вы попадёте в интерактивную консоль MariaDB (приглашение будет примерно таково: 
-   ```
-MariaDB [(none)]>).
-```
-5. Подключитесь к нужной базе данных и посмотрите таблицы:  
-   Выполните:
-   ```
-   USE [Your_DB];
-   SHOW TABLES;
-   ```
-   После команды SHOW TABLES; отобразится список таблиц в базе данных [Your_DB].
-
-6.  Убедитесь, что файл дампа расположен в текущей директории или укажите полный путь к файлу.
-7. Выполните команду для импорта дампа непосредственно из Windows (cmd):
-   ```
-   docker exec -i mariadb_server mysql -u root -p!w1JM6bD2If7 osint_bd < dump.sql
-   ```
-   Обратите внимание, что здесь пароль указан сразу после -p без пробела. Если по соображениям безопасности вы не хотите его указывать в команде, можно оставить -p без пароля, тогда после запуска команды вам будет предложено ввести пароль:
-   ```
-   docker exec -i mariadb_server mysql -u root -p osint_bd < dump.sql
-   ```
-8. После выполнения команды дамп будет импортирован в базу данных [Your_DB].  
-   При этом новые таблицы, которых не было, будут созданы, если они описаны в дампе.
-
-
-## Если где-то ошиблись при разработке, то в каталоге проекта:
-### 1. Сбросить контейнеры:
-```
-docker-compose down -v
-```
-### 2. Запустить их заново:
-```
-docker-compose up -d
-```
-
-p.s. Если у вас есть несколько дампов БД в формате *.sql определенном каталоге, скопируйте в этот каталог файл из проекта 
- <br>**для windows:**<br>
-```
-import_all_sql.bat
-```
-В каталоге с дампами БД запустить файл через **cmd** (не в PowerShell)
-```
-import_all_sql.bat
-```
-**для linux:**
-```
-import_all_sql.sh
-```
-```
-chmod +x import_all_sql.sh
-```
-```
-.\import_all_sql.sh
-```
-
-
-### p.p.s.
-### Вариант 1. Использование команды `tree` в терминале (Linux / macOS / WSL)
-1. **Установка утилиты `tree`:**
-   - **Ubuntu/Debian:**  
-     ```bash
-     sudo apt update && sudo apt install tree
-     ```
-2. **Генерация дерева проекта:**
-   Перейдите в корневую папку вашего проекта и выполните команду:
-   ```bash
-   tree -L 2 > README.md
-   ```
-   Здесь:
-   - `-L 2` ограничивает глубину отображения до 2 уровней (при необходимости замените число на другое значение);
-   - `> README.md` сохраняет вывод в файл `README.md`. Если README.md уже существует, команда перезапишет его содержимое.
-
-
-### p.p.p.s.
-▎1. Если изменились настройки в исходном коде или Dockerfile (билд-часть)
-
-Перестройте образы и заново запустите контейнеры:
-```
-docker-compose up -d --build
-```
-
-Эта команда:
-
-• Перестроит образы для контейнеров, для которых есть изменения в Dockerfile или в контексте сборки.
-
-• Остановит старые контейнеры и запустит новые в фоновом режиме.
-
----
-
-▎2. Если доступны обновлённые образы из Docker Hub или другого реестра
-
-Чтобы скачать обновлённые версии образов, выполните:
-```
-docker-compose pull
-```
-
-А затем запустите контейнеры (это можно совместить с пересборкой, если необходимо):
-```
-docker-compose up -d
-```
-
----
-
-▎3. Если нужно перезапустить контейнеры (без пересборки образов)
-
-Можно просто выполнить перезапуск сервисов:
-```
-docker-compose restart
-```
-
-Эта команда остановит и заново запустит контейнеры, не затрагивая образы, что удобно, если изменения касаются, например, переменных окружения (если они были переданы через env_file или переменные в Docker Compose).
-
----
-
-▎4. Полная перезагрузка (при необходимости удалить старые контейнеры)
-
-Если требуется удалить старые контейнеры, выполнить некоторые операции «с нуля», можно:
-
-1. Остановить и удалить контейнеры:
-
-   ```
-   docker-compose down
-   ```
-
-2. (Опционально) Удалить неиспользуемые образы и контейнеры:
-
-   ```
-   docker system prune -f
-   ```
-
-3. Запустить контейнеры заново:
-
-   ```
-   docker-compose up -d --build
-   ```
-
 
 
 ## TODO:
