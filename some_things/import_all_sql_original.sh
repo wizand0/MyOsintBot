@@ -1,7 +1,5 @@
 ﻿#!/bin/bash
-# import_all_sql.sh
 # Параметры подключения и имя контейнера
-# !!!!!!!!!!!!!!!!!!!!!!! sudo apt install pv !!!!!!!!!!!!!!!!!!!
 container="mariadb_server"
 dbUser="root"
 dbPass="!w1JM6bD2If7"
@@ -28,11 +26,9 @@ for file in "${files[@]}"; do
     echo -e "\n---------------------------"
     echo -e "Импорт файла: $file ($i из $total) - $percent%"
 
-    # Получаем размер файла для индикатора прогресса
-    fileSize=$(stat -c%s "$file")
-    
-    # Выполняем импорт с использованием pv
-    pv -s "$fileSize" "$file" | docker exec -i "$container" mariadb -u "$dbUser" -p"$dbPass" "$dbName"
+    # Выполняем импорт SQL файла через docker
+    # Читаем содержимое файла и направляем его в stdin контейнера
+    docker exec -i "$container" mariadb -u "$dbUser" -p"$dbPass" "$dbName" < "$file"
     exitCode=$?
     
     # Вывод результата выполнения с использованием ANSI-цветов
