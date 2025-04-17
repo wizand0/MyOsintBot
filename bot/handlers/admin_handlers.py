@@ -266,7 +266,7 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         temp_message = "Информация о температуре недоступна."
 
 
-
+# new messages
     message = (
         f"Характеристики сервера:\n"
         f"• Загрузка CPU: {cpu_percent}%\n"
