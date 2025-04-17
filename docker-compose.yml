@@ -17,7 +17,7 @@ services:
       - /proc/loadavg:/host_loadavg:ro
       - /proc/uptime:/host_uptime:ro
 # !!!!!!!!!!! Раскомментировать в Linux
-      - /sys/class/hwmon:/host_sys/class/hwmon:ro
+#      - /sys/class/hwmon:/host_sys/class/hwmon:ro
     networks:
       - app-network
 

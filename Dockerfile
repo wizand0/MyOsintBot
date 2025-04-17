@@ -36,6 +36,6 @@ RUN chmod +x /app/entrypoint.sh
 # CMD ["python", "bot.py"]
 
 # !!!!!!!!!!! Раскомментировать в Linux
-ENTRYPOINT ["/app/entrypoint.sh"]
+# ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["python", "-m", "bot.main"]
