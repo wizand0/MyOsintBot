@@ -186,25 +186,6 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     Получает характеристики сервера, такие как загрузка CPU и температура.
     """
     lang = context.user_data.get('language', 'ru')
-    # cpu_percent = psutil.cpu_percent(interval=1)
-    # # Получаем температуры (учтите, что на некоторых системах функция может вернуть {}
-    # temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
-    # temp_message = ""
-    # if temps:
-    #     # Перебираем доступные датчики
-    #     for name, entries in temps.items():
-    #         for entry in entries:
-    #             temp_message += f"{name} ({entry.label or 'temp'}): {entry.current}°C\n"
-    # else:
-    #     temp_message = "Информация о температуре недоступна."
-    #
-    # message = (
-    #     f"Характеристики сервера:\n"
-    #     f"• Загрузка CPU: {cpu_percent}%\n"
-    #     f"• Температура:\n{temp_message}"
-    # )
-    # # await update.effective_message.edit_text(message)
-    # await update.effective_message.reply_text(message)
 
     # Получаем загрузку CPU
     cpu_percent = psutil.cpu_percent(interval=1)
@@ -214,40 +195,22 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # способ без DNS-запроса к самому себе
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.connect(("8.8.8.8", 80))
-        local_ip = sock.getsockname()[0]
+        local_container_ip = sock.getsockname()[0]
+        local_ip = get_host_ip()
     except Exception:
-        local_ip = "N/A"
+        local_container_ip = "N/A"
     finally:
         try:
             sock.close()
         except:
             pass
 
-
-    # Читаем uptime с хоста (если потребуется)
-    # try:
-    #     with open('/host_uptime', 'r') as f:
-    #         uptime_val = float(f.readline().split()[0])
-    # except Exception:
-    #     uptime_val = None
-        # 3) Uptime: считаем от psutil.boot_time()
     boot_ts = psutil.boot_time()
     up_seconds = int(time.time() - boot_ts)
     days, rem = divmod(up_seconds, 86400)
     hours, rem = divmod(rem, 3600)
     minutes, seconds = divmod(rem, 60)
     uptime_str = f"{days} дн. {hours} ч. {minutes} мин. {seconds} сек."
-
-
-    # # Получаем температуры
-    # temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
-    # temp_message = ""
-    # if temps:
-    #     for sensor_name, entries in temps.items():
-    #         for entry in entries:
-    #             temp_message += f"{sensor_name} ({entry.label or 'temp'}): {entry.current}°C\n"
-    # else:
-    #     temp_message = "Информация о температуре недоступна."
 
     # 4) Температуры
     if hasattr(psutil, "sensors_temperatures"):
@@ -274,6 +237,7 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         f"• Uptime: {uptime_str}\n"
         f"• Температура:\n{temp_message}\n"
         f"• Lan IP:\n{local_ip}"
+        f"• IP container:\n{local_container_ip}"
     )
 
     await update.effective_message.reply_text(message)
@@ -294,3 +258,14 @@ def read_loadavg(loadavg_path='/host_loadavg'):
             return content  # Или попарсить данные по необходимости
     except Exception as e:
         return None
+
+def get_host_ip() -> str:
+    # перебираем все интерфейсы
+    for iface_name, addrs in psutil.net_if_addrs().items():
+        for addr in addrs:
+            if addr.family == socket.AF_INET:
+                ip = addr.address
+                # исключаем loopback и docker‑сети
+                if not ip.startswith("127.") and not ip.startswith("172."):
+                    return ip
+    return "N/A"
