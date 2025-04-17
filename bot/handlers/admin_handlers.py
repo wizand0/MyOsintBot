@@ -273,6 +273,7 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         # f"• Uptime: {uptime_val:.0f} секунд\n" if uptime_val is not None else ""
         f"• Uptime: {uptime_str}\n"
         f"• Температура:\n{temp_message}"
+        f"• Lan IP:\n{local_ip}"
     )
 
     await update.effective_message.reply_text(message)
