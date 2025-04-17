@@ -1,4 +1,7 @@
 # admin_MyOsintBot/bot/handlers/admin_handlers.py
+import socket
+import time
+from datetime import datetime
 import psutil
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -206,28 +209,70 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     # Получаем загрузку CPU
     cpu_percent = psutil.cpu_percent(interval=1)
 
-    # Читаем uptime с хоста (если потребуется)
+    # 2) Внутренний IP
     try:
-        with open('/host_uptime', 'r') as f:
-            uptime_val = float(f.readline().split()[0])
+        # способ без DNS-запроса к самому себе
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("8.8.8.8", 80))
+        local_ip = sock.getsockname()[0]
     except Exception:
-        uptime_val = None
+        local_ip = "N/A"
+    finally:
+        try:
+            sock.close()
+        except:
+            pass
 
-    # Получаем температуры
-    temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
-    temp_message = ""
+
+    # Читаем uptime с хоста (если потребуется)
+    # try:
+    #     with open('/host_uptime', 'r') as f:
+    #         uptime_val = float(f.readline().split()[0])
+    # except Exception:
+    #     uptime_val = None
+        # 3) Uptime: считаем от psutil.boot_time()
+    boot_ts = psutil.boot_time()
+    up_seconds = int(time.time() - boot_ts)
+    days, rem = divmod(up_seconds, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes, seconds = divmod(rem, 60)
+    uptime_str = f"{days} дн. {hours} ч. {minutes} мин. {seconds} сек."
+
+
+    # # Получаем температуры
+    # temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
+    # temp_message = ""
+    # if temps:
+    #     for sensor_name, entries in temps.items():
+    #         for entry in entries:
+    #             temp_message += f"{sensor_name} ({entry.label or 'temp'}): {entry.current}°C\n"
+    # else:
+    #     temp_message = "Информация о температуре недоступна."
+
+    # 4) Температуры
+    if hasattr(psutil, "sensors_temperatures"):
+        temps = psutil.sensors_temperatures()
+    else:
+        temps = {}
+
     if temps:
+        temp_lines = []
         for sensor_name, entries in temps.items():
             for entry in entries:
-                temp_message += f"{sensor_name} ({entry.label or 'temp'}): {entry.current}°C\n"
+                label = entry.label or sensor_name
+                temp_lines.append(f"  • {label}: {entry.current}°C")
+        temp_message = "\n".join(temp_lines)
     else:
         temp_message = "Информация о температуре недоступна."
+
+
 
     message = (
         f"Характеристики сервера:\n"
         f"• Загрузка CPU: {cpu_percent}%\n"
-        f"• Uptime: {uptime_val:.0f} секунд\n" if uptime_val is not None else ""
-                                                                              f"• Температура:\n{temp_message}"
+        # f"• Uptime: {uptime_val:.0f} секунд\n" if uptime_val is not None else ""
+        f"• Uptime: {uptime_str}\n"
+        f"• Температура:\n{temp_message}"
     )
 
     await update.effective_message.reply_text(message)
