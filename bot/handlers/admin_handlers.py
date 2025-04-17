@@ -1,4 +1,5 @@
 # admin_MyOsintBot/bot/handlers/admin_handlers.py
+import os
 import socket
 import time
 from datetime import datetime
@@ -191,12 +192,13 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     cpu_percent = psutil.cpu_percent(interval=1)
 
     # 2) Внутренний IP
+    local_ip = os.getenv("HOST_LAN_IP", "N/A")
     try:
         # способ без DNS-запроса к самому себе
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.connect(("8.8.8.8", 80))
         local_container_ip = sock.getsockname()[0]
-        local_ip = get_host_ip()
+        # local_ip = get_host_ip()
     except Exception:
         local_container_ip = "N/A"
     finally:

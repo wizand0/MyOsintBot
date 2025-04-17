@@ -9,6 +9,8 @@ services:
       - SYS_RAWIO
     container_name: myosint_bot
     restart: always
+    environment:
+      - HOST_LAN_IP=${YOUR_HOST_IP}
     depends_on:
       - db
     env_file:
