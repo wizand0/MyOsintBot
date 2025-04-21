@@ -24,8 +24,6 @@ async def on_startup_callback(context):
     await notify_startup_try_if_no_internet(context.bot)
     # await notify_startup(context.bot)
 
-
-# Код до рефакторинга handlers.py в отдельные файлы
 def main():
     application = ApplicationBuilder().token(TOKEN).build()
     # Обработчик команды /start
