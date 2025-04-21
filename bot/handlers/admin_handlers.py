@@ -4,8 +4,8 @@ import socket
 import time
 from datetime import datetime
 import psutil
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ContextTypes, CallbackQueryHandler
 from mysql.connector import Error
 
 from ..auth import is_admin
@@ -13,6 +13,125 @@ from ..config import ALLOWED_USERS, logger
 from ..db import get_db_connection
 from ..language_texts import texts
 from ..data import pending_requests, save_allowed_users  # импортируем список заявок
+
+
+# 1. Кнопка “Новые заявки”
+async def new_requests_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показываем список pending_requests как Inline‑кнопок."""
+    user_id = update.effective_user.id
+    lang = context.user_data.get('language','en')  # или как у вас хранится
+
+    if not is_admin(user_id):
+        return await update.callback_query.answer(texts[lang]["private_zone"], show_alert=True)
+
+    if not pending_requests:
+        await update.callback_query.edit_message_text(
+            texts[lang].get("no_requests","Новых заявок нет.")
+        )
+        return
+
+    kb = [
+        [InlineKeyboardButton(
+            text=f"{uid}",
+            callback_data=f"view_req:{uid}"
+        )]
+        for uid in pending_requests
+    ]
+    kb.append([InlineKeyboardButton(text="Назад", callback_data="back_to_admin_menu")])
+    markup = InlineKeyboardMarkup(kb)
+    await update.callback_query.edit_message_text(
+        texts[lang].get("choose_request","Выберите заявку:"),
+        reply_markup=markup
+    )
+    await update.callback_query.answer()
+
+
+# 2. Просмотр конкретной заявки
+async def view_request_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """По клику на пользователя – показываем кнопку Одобрить/Отказать."""
+    query = update.callback_query
+    lang = context.user_data.get('language','en')
+    _, uid_str = query.data.split(":",1)
+    applicant_id = int(uid_str)
+
+    text = texts[lang].get("request_from","Заявка от") + f" {applicant_id}"
+    kb = [
+        [
+            InlineKeyboardButton(text="✅ Одобрить", callback_data=f"approve_req:{applicant_id}"),
+            InlineKeyboardButton(text="❌ Отказать", callback_data=f"deny_req:{applicant_id}")
+        ],
+        [InlineKeyboardButton(text="← Назад", callback_data="new_requests")]
+    ]
+    await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(kb))
+    await query.answer()
+
+
+# 3. Обработка одобрения
+async def approve_request_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    lang = context.user_data.get('language','en')
+    _, uid_str = query.data.split(":",1)
+    applicant_id = int(uid_str)
+
+    if applicant_id in pending_requests:
+        pending_requests.remove(applicant_id)
+        ALLOWED_USERS.add(applicant_id)
+        save_allowed_users(ALLOWED_USERS)
+
+        # уведомляем администратора в том же сообщении
+        await query.edit_message_text(
+            f"{texts[lang]['user']} {applicant_id} {texts[lang]['is_authorizied']}"
+        )
+        # уведомляем пользователя
+        try:
+            await context.bot.send_message(
+                chat_id=applicant_id,
+                text=texts[lang].get(
+                    "your_request_approved",
+                    "Ваша заявка одобрена."
+                )
+            )
+        except Exception as e:
+            logger.error(f"Can't notify user {applicant_id}: {e}")
+
+    else:
+        await query.answer(texts[lang].get("no_user_found","Заявка уже обработана"), show_alert=True)
+
+
+# 4. Обработка отказа
+async def deny_request_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    lang = context.user_data.get('language','en')
+    _, uid_str = query.data.split(":",1)
+    applicant_id = int(uid_str)
+
+    if applicant_id in pending_requests:
+        pending_requests.remove(applicant_id)
+        await query.edit_message_text(
+            texts[lang].get("request_denied", "Заявка отклонена.")
+        )
+        # можно уведомить пользователя
+        try:
+            await context.bot.send_message(
+                chat_id=applicant_id,
+                text=texts[lang].get(
+                    "your_request_denied",
+                    "Ваша заявка отклонена."
+                )
+            )
+        except Exception:
+            pass
+    else:
+        await query.answer(texts[lang].get("no_user_found", "Заявка уже обработана"), show_alert=True)
+
+
+# Регистрация хендлеров в вашем ApplicationBuilder
+def register_admin_handlers(application):
+    application.add_handler(CallbackQueryHandler(new_requests_cb, pattern="^new_requests$"))
+    application.add_handler(CallbackQueryHandler(view_request_cb, pattern="^view_req:"))
+    application.add_handler(CallbackQueryHandler(approve_request_cb, pattern="^approve_req:"))
+    application.add_handler(CallbackQueryHandler(deny_request_cb, pattern="^deny_req:"))
+    # + ваш хендлер главного меню администратора, где кнопка new_requests
 
 
 async def db_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -271,3 +390,47 @@ def get_host_ip() -> str:
                 if not ip.startswith("127.") and not ip.startswith("172."):
                     return ip
     return "N/A"
+
+
+# ---
+# 2) show_pending_requests_as_inline – собирает список
+#    заявок и рисует для каждой Inline‑кнопку.
+# ---
+async def show_pending_requests_as_inline(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = context.user_data.get('language', 'ru')
+
+    # TODO: Реализуйте свой способ достать из БД список «новых» заявок
+    # здесь просто заглушка:
+    pending = show_pending_requests()  # → List[Dict] или List[ВашКласс]
+
+    if not pending:
+        await (update.message or update.callback_query).reply_text(
+            texts[lang]['no_pending_requests']
+        )
+        return
+
+    # Собираем клавиатуру: на каждую заявку своя callback_data
+    kb = []
+    for req in pending:
+        # допустим у вас в req есть id и title
+        button = InlineKeyboardButton(
+            text=f"{req['id']}: {req['title']}",
+            callback_data=f"view_req:{req['id']}"
+        )
+        kb.append([button])
+
+    reply_markup = InlineKeyboardMarkup(kb)
+
+    # Если мы пришли по тексту – update.message, иначе по коллбэку:
+    target = update.message or update.callback_query
+    if isinstance(target, Update().callback_query.__class__):
+        await update.callback_query.answer()
+        await update.callback_query.edit_message_text(
+            text=texts[lang]['choose_request'],
+            reply_markup=reply_markup
+        )
+    else:
+        await target.reply_text(
+            texts[lang]['choose_request'],
+            reply_markup=reply_markup
+        )
