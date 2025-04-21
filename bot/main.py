@@ -7,6 +7,7 @@ from telegram.ext import (
     filters, CallbackQueryHandler,
 )
 
+from bot.db import init_db_pool, close_db_pool
 from .handlers.common_handlers import callback_handler
 from .handlers.admin_handlers import approve_user, delete_user, stats_handler
 from .handlers.language_handlers import language_selection_handler, change_language_handler
@@ -26,8 +27,27 @@ async def on_startup_callback(context):
 
 stats_cmd = CommandHandler("stats", stats_handler)
 
+
+async def on_startup(app):
+    # создаём пул, сохраняем в bot_data
+    app.bot_data["db_pool"] = await init_db_pool()
+    await notify_startup_try_if_no_internet(app.bot)
+
+async def on_shutdown(app):
+    # корректно закрываем пул
+    pool = app.bot_data.get("db_pool")
+    if pool:
+        await close_db_pool(pool)
+
+
+
 def main():
-    application = ApplicationBuilder().token(TOKEN).build()
+    application = (ApplicationBuilder()
+                   .token(TOKEN)
+                   # v20+: post_init и post_shutdown
+                   .post_init(on_startup)
+                   .post_shutdown(on_shutdown)
+                   .build())
     # Обработчик команды /start
     application.add_handler(CommandHandler("start", start))
     # Обработчик для одобрения заявки через команду /approve 123456789 (только для админа)
