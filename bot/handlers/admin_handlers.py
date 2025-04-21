@@ -115,6 +115,58 @@ async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
 
 
+async def delete_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    # Вспомогательная функция для отправки ответа
+    async def send_message(text: str):
+        if update.message:
+            return await update.message.reply_text(text)
+        elif update.callback_query and update.callback_query.message:
+            return await update.callback_query.message.reply_text(text)
+        else:
+            return await context.bot.send_message(
+                chat_id=update.effective_chat.id, text=text
+            )
+
+    # Проверка, что язык выбран
+    if 'language' not in context.user_data:
+        await send_message(
+            "Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start"
+        )
+        return
+    lang = context.user_data['language']
+
+    # Проверяем, что команду вызывает админ
+    user_id = update.effective_user.id
+    if not is_admin(user_id):
+        await send_message(texts[lang].get("private_zone", "У вас нет прав для этой команды."))
+        return
+
+    # Парсим аргумент
+    try:
+        target_id = int(context.args[0])
+    except (IndexError, ValueError):
+        await send_message(
+            texts[lang].get("delete_user", "Укажите корректный id пользователя. Пример: /delete 123456789")
+        )
+        return
+
+    # Проверяем, есть ли пользователь в списке
+    if target_id not in ALLOWED_USERS:
+        await send_message(
+            texts[lang].get("user_not_found", f"Пользователь {target_id} не найден в списке.")
+        )
+        return
+
+    # Удаляем и сохраняем
+    ALLOWED_USERS.remove(target_id)
+    save_allowed_users(ALLOWED_USERS)
+
+    text1 = texts[lang].get("user", "Пользователь")
+    text2 = texts[lang].get("is_removed", "успешно удалён из разрешённых")
+    await send_message(f"{text1} {target_id} {text2}.")
+
+
+
 # Обработчик для команды «Количество пользователей»
 async def show_users_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Функция-обёртка отправки сообщений,

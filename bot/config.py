@@ -22,16 +22,6 @@ DB_CONFIG = {
     'port': int(os.getenv('DB_PORT', 3306))
 }
 
-# Получаем список разрешенных пользователей из переменных окружения
-# allowed_users_str = os.getenv('ALLOWED_USERS', '')
-# ALLOWED_USERS = set()
-# if allowed_users_str:
-    # Преобразуем строку вида "123456789,987654321" в множество чисел
-    # ALLOWED_USERS = {int(x.strip()) for x in allowed_users_str.split(',') if x.strip()}
-
-
-
-
 # Считываем идентификатор администратора
 ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
 

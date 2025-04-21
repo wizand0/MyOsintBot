@@ -8,7 +8,7 @@ from telegram.ext import (
 )
 
 from .handlers.common_handlers import callback_handler
-from .handlers.admin_handlers import approve_user
+from .handlers.admin_handlers import approve_user, delete_user
 from .handlers.language_handlers import language_selection_handler, change_language_handler
 from .handlers.user_handlers import message_handler
 from .handlers.user_handlers import start
@@ -30,6 +30,8 @@ def main():
     application.add_handler(CommandHandler("start", start))
     # Обработчик для одобрения заявки через команду /approve 123456789 (только для админа)
     application.add_handler(CommandHandler("approve", approve_user))
+    # Обработчик для одобрения заявки через команду /delete 123456789 (только для админа)
+    application.add_handler(CommandHandler("delete", delete_user))
     # Обработка всех текстовых сообщений
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     # Регистрируем обработчик на CallbackQuery для выбора языка

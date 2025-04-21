@@ -7,12 +7,20 @@ from datetime import datetime, timezone
 from telegram import Bot
 import logging
 
+from .language_texts import texts
+
 logger1 = logging.getLogger(__name__)
 
 
 async def notify_admin(context: ContextTypes.DEFAULT_TYPE, applicant_id: int):
+    # Получаем выбранный язык
+    lang = context.user_data['language']
+
+
     try:
-        message = f"Новая заявка на доступ от пользователя с id: {applicant_id}"
+        text1 = texts[lang].get("approve_user", "Новая заявка на доступ(для доступа укажите: /approve 123456789):")
+        message = f"{text1} {applicant_id}"
+
         await context.bot.send_message(chat_id=ADMIN_ID, text=message)
     except Exception as e:
         logger.error(f"Ошибка уведомления администратора: {e}")

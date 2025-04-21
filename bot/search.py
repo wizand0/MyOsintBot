@@ -52,47 +52,6 @@ def perform_general_search(search_query: str):
             connection.close()
     return results
 
-
-# Функция для поиска по номеру телефона
-# def perform_phone_search(search_query: str):
-#     logger.info("Начато выполнение поиска по номеру телефона")
-#     connection = get_db_connection()
-#     if connection is None:
-#         logger.info("connection is None")
-#         return None
-#     results = []
-#     try:
-#         cursor = connection.cursor(dictionary=True)
-#         # Получаем список таблиц, в которых есть столбец phone_number
-#         cursor.execute(
-#             "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS "
-#             "WHERE TABLE_SCHEMA = %s AND COLUMN_NAME = 'phone_number'",
-#             (DB_CONFIG['database'],)
-#         )
-#         tables = cursor.fetchall()
-#         for table in tables:
-#
-#             table_name = table['TABLE_NAME']
-#             logger.info(f"Поиск по {table_name}")
-#             query = f"SELECT * FROM {table_name} WHERE phone_number LIKE %s LIMIT 10"
-#             param = f"%{search_query}%"
-#             try:
-#                 cursor.execute(query, (param,))
-#                 table_results = cursor.fetchall()
-#                 for row in table_results:
-#                     row['table_name'] = table_name  # добавляем информацию о таблице
-#                     results.append(row)
-#             except Exception as e:
-#                 logger.error(f"Ошибка поиска в таблице {table_name}: {e}")
-#         cursor.close()
-#     except Exception as e:
-#         logger.error(f"Ошибка выполнения поиска по телефону: {e}")
-#     finally:
-#         if connection.is_connected():
-#             connection.close()
-#     return results
-
-
 def has_idx_phone(cursor, table_name):
     """
     Проверяем, есть ли в данной таблице индекс idx_phone
