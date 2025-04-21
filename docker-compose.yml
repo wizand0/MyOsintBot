@@ -32,6 +32,7 @@ services:
     ports:
       - "3306:3306"  # Если нужен проброс порта на хост-машину
     volumes:
+      - ./docker/mysql/conf.d/99-custom.cnf:/etc/mysql/conf.d/99-custom.cnf:ro
       - db_data:/var/lib/mysql
     networks:
       - app-network
