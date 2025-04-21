@@ -1,6 +1,7 @@
 # user_handlers.py
 
 # Обработчик команды /start – вывод меню или запроса выбора языка
+#back to commit git push origin main --force
 import asyncio
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
