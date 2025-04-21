@@ -56,8 +56,8 @@ async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     # Вспомогательная функция для отправки сообщения,
     # которая учитывает тип обновления (message или callback_query)
     async def send_message(text: str):
-        if update.message:
-            return await update.message.reply_text(text)
+        if update.effective_message:
+            return await update.effective_message.reply_text(text)
         elif update.callback_query and update.callback_query.message:
             return await update.callback_query.message.reply_text(text)
         else:
@@ -118,8 +118,8 @@ async def approve_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 async def delete_user(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Вспомогательная функция для отправки ответа
     async def send_message(text: str):
-        if update.message:
-            return await update.message.reply_text(text)
+        if update.effective_message:
+            return await update.effective_message.reply_text(text)
         elif update.callback_query and update.callback_query.message:
             return await update.callback_query.message.reply_text(text)
         else:
@@ -172,8 +172,8 @@ async def show_users_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     # Функция-обёртка отправки сообщений,
     # выбирающая метод в зависимости от типа обновления.
     async def send_message(text: str):
-        if update.message:
-            return await update.message.reply_text(text)
+        if update.effective_message:
+            return await update.effective_message.reply_text(text)
         elif update.callback_query:
             # Например, редактируем сообщение у callback query
             return await update.callback_query.edit_message_text(text)
@@ -201,8 +201,8 @@ async def show_users_count(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 async def show_pending_requests(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     def send_message(text: str):
-        if update.message:
-            return update.message.reply_text(text)
+        if update.effective_message:
+            return update.effective_message.reply_text(text)
         elif update.callback_query:
             # Изменим текст сообщения, к которому прикреплена inline-кнопка
             return update.callback_query.edit_message_text(text)
@@ -336,7 +336,7 @@ async def show_pending_requests_as_inline(update: Update, context: ContextTypes.
     pending = show_pending_requests()  # → List[Dict] или List[ВашКласс]
 
     if not pending:
-        await (update.message or update.callback_query).reply_text(
+        await (update.effective_message or update.callback_query).reply_text(
             texts[lang]['no_pending_requests']
         )
         return
@@ -353,8 +353,8 @@ async def show_pending_requests_as_inline(update: Update, context: ContextTypes.
 
     reply_markup = InlineKeyboardMarkup(kb)
 
-    # Если мы пришли по тексту – update.message, иначе по коллбэку:
-    target = update.message or update.callback_query
+    # Если мы пришли по тексту – update.effective_message, иначе по коллбэку:
+    target = update.effective_message or update.callback_query
     if isinstance(target, Update().callback_query.__class__):
         await update.callback_query.answer()
         await update.callback_query.edit_message_text(
@@ -379,7 +379,7 @@ async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lines.append(f"  Пользователь {uid}: общий={ctr['general']}, телефон={ctr['phone']}")
     text = "\n".join(lines) or "Нет данных"
 
-    await update.message.reply_text(text)
+    await update.effective_message.reply_text(text)
 
     # Если нужно — сбросить после скачивания:
     # USER_STATS.clear()

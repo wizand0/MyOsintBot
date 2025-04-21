@@ -283,7 +283,7 @@ async def show_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         # Это обычное сообщение
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             text=texts[lang]['choose_option'],
             reply_markup=kb
         )

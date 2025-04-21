@@ -27,7 +27,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(texts['ru']['select_language'], reply_markup=reply_markup)
+        await update.effective_message.reply_text(texts['ru']['select_language'], reply_markup=reply_markup)
         return
 
     user_lang = context.user_data['language']
@@ -38,7 +38,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if user_id not in pending_requests:
             pending_requests.add(user_id)
             await notify_admin(context, user_id)
-        await update.message.reply_text(texts[user_lang]['request_received'])
+        await update.effective_message.reply_text(texts[user_lang]['request_received'])
         return
 
     # Получаем клавиатуру для выбранного языка и типа пользователя
@@ -49,7 +49,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         welcome_text = texts[user_lang]['user_welcome']
 
-    await update.message.reply_text(welcome_text, reply_markup=reply_markup)
+    await update.effective_message.reply_text(welcome_text, reply_markup=reply_markup)
 
 
 # Основной обработчик текстовых сообщений (для работы с меню)
@@ -58,13 +58,13 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             "Пожалуйста, выберите язык, выполнив /start; Please, choose language, press /start")
         return
 
     # Получаем выбранный язык
     lang = context.user_data['language']
-    text = update.message.text.strip().lower()
+    text = update.effective_message.text.strip().lower()
 
     # Обработка команд администратора (сравнение можно проводить либо в нижнем регистре, либо добавить отдельные ключи)
     if is_admin(user_id):
@@ -86,18 +86,18 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Проверка авторизации пользователя
     if not is_authorized(user_id):
-        await update.message.reply_text(texts[lang]['access_denied'])
+        await update.effective_message.reply_text(texts[lang]['access_denied'])
         return
     logger.info(text)
     # Обработка команд меню
     if text == texts[lang].get("common_search", "общий поиск").lower():
         context.user_data['search_mode'] = 'general'
-        await update.message.reply_text(texts[lang]['general_search_query'])
+        await update.effective_message.reply_text(texts[lang]['general_search_query'])
         return
 
     if text == texts[lang].get("search_phone", "поиск по номеру телефона").lower():
         context.user_data['search_mode'] = 'phone'
-        await update.message.reply_text(texts[lang]['phone_search_query'])
+        await update.effective_message.reply_text(texts[lang]['phone_search_query'])
         return
 
     if text == texts[lang].get("change_language", "Сменить язык").lower():
@@ -109,7 +109,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(texts[lang]['select_language'], reply_markup=reply_markup)
+        await update.effective_message.reply_text(texts[lang]['select_language'], reply_markup=reply_markup)
         return
 
     if text == texts[lang].get("instruction_cmd", "инструкция").lower():
@@ -117,7 +117,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Если инструкция хранится в отдельном ключе:
         if is_admin(user_id):
             # отправляем админ‑версию
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 texts[lang].get(
                     "admin_instruction_text",
                     "Админ‑инструкция не задана, обратитесь к разработчику"
@@ -125,7 +125,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             )
         else:
             # отправляем обычную инструкцию
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 texts[lang].get(
                     "instruction_text",
                     "Инструкция не найдена"
@@ -135,12 +135,12 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Если пользователь уже выбрал режим поиска, обрабатываем его запрос
     if context.user_data.get('search_mode'):
-        query_text = update.message.text.strip()
+        query_text = update.effective_message.text.strip()
 
         mode = context.user_data.get('search_mode')
 
         # Отправляем сообщение-заглушку для отображения прогресса с использованием перевода
-        loading_msg = await update.message.reply_text(
+        loading_msg = await update.effective_message.reply_text(
             texts[lang].get("search_loading", "Идет поиск, пожалуйста, подождите..."))
         try:
             # Обновление статуса – подготовка запроса
@@ -194,7 +194,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                     # Если результат слишком длинный, сохраняем его как HTML и отправляем файл
                     file_path = await asyncio.to_thread(save_results_as_html, results)
                     with open(file_path, "rb") as file:
-                        await update.message.reply_document(
+                        await update.effective_message.reply_document(
                             document=file,
                             filename="results.html",
                             caption=texts[lang].get(
@@ -203,18 +203,18 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                             )
                         )
             else:
-                await update.message.reply_text(texts[lang].get("no_results", "Результатов не найдено."))
+                await update.effective_message.reply_text(texts[lang].get("no_results", "Результатов не найдено."))
 
         except Exception as e:
             logger.exception("Ошибка при выполнении поиска")
             # При ошибке тоже удаляем сообщение-заглушку
             await loading_msg.delete()
-            await update.message.reply_text(texts[lang].get("error", "Произошла ошибка при выполнении запроса."))
+            await update.effective_message.reply_text(texts[lang].get("error", "Произошла ошибка при выполнении запроса."))
 
         # Сбрасываем режим поиска после обработки запроса
         context.user_data.pop('search_mode', None)
     else:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             texts[lang].get("enter_right_command",
                             "Пожалуйста, выберите команду из меню или используйте /start для повторного вызова меню.")
         )
