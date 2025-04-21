@@ -5,7 +5,7 @@
 performance_schema = ON
 
 # — кеш открытых таблиц
-table_open_cache = 4000
+table_open_cache = 6000
 
 # — таймауты висящих соединений
 wait_timeout = 300
@@ -19,4 +19,4 @@ innodb_log_file_size       = 512M
 innodb_log_files_in_group  = 2
 
 # — буфер логов для больших транзакций
-innodb_log_buffer_size     = 64M
+innodb_log_buffer_size     = 128M
