@@ -13,10 +13,16 @@ from .handlers.language_handlers import language_selection_handler, change_langu
 from .handlers.user_handlers import message_handler
 from .handlers.user_handlers import start
 from .config import TOKEN
+from .utils import notify_startup, notify_startup_try_if_no_internet
+
 
 # from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
 #     callback_handler
 
+async def on_startup_callback(context):
+    # Telegram‑бота можно получить из context.bot
+    await notify_startup_try_if_no_internet(context.bot)
+    # await notify_startup(context.bot)
 
 
 # Код до рефакторинга handlers.py в отдельные файлы
@@ -35,6 +41,9 @@ def main():
     application.add_handler(CallbackQueryHandler(change_language_handler, pattern="^change_language$"))
     # Регистрируем обработчики команд и callback query
     application.add_handler(CallbackQueryHandler(callback_handler))
+
+    # Планируем единоразовый job на 5‑й секунде
+    application.job_queue.run_once(on_startup_callback, when=5)
 
     # Запуск бота
     application.run_polling()
