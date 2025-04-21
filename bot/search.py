@@ -1,10 +1,16 @@
 # search.py
 
-from .config import DB_CONFIG, logger
+from .config import DB_CONFIG, logger, USER_STATS
+from .data import save_user_stats
 from .db import get_db_connection
 
 
 def perform_general_search(search_query: str):
+
+
+
+
+
     connection = get_db_connection()
     if connection is None:
         return None
@@ -69,6 +75,8 @@ def has_idx_phone(cursor, table_name):
 
 
 def perform_phone_search(search_query: str):
+
+
     logger.info("Начато выполнение поиска по номеру телефона")
     conn = get_db_connection()
     if conn is None:

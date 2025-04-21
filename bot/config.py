@@ -3,7 +3,7 @@ import os
 import logging
 from dotenv import load_dotenv
 
-from .data import load_allowed_users, save_allowed_users
+from .data import load_allowed_users, save_allowed_users, load_user_stats, save_user_stats
 
 # Загружаем переменные из файла .env
 load_dotenv()
@@ -33,3 +33,9 @@ if not ALLOWED_USERS:
     if ADMIN_ID not in ALLOWED_USERS:
         ALLOWED_USERS.append(ADMIN_ID)
     save_allowed_users(ALLOWED_USERS)
+
+
+USER_STATS = load_user_stats()
+
+# опционально — сразу сохраните, если файл не существовал
+save_user_stats(USER_STATS)

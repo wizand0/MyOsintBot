@@ -1,7 +1,6 @@
 # user_handlers.py
 
 # Обработчик команды /start – вывод меню или запроса выбора языка
-#back to commit git push origin main --force
 import asyncio
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -10,8 +9,8 @@ from telegram.ext import ContextTypes
 from .admin_handlers import show_pending_requests, show_users_count, db_statistics, server_statistics
 from .common_handlers import build_menu_keyboard
 from ..auth import is_authorized, is_admin
-from ..config import logger
-from ..data import pending_requests
+from ..config import logger, USER_STATS
+from ..data import pending_requests, save_user_stats
 from ..language_texts import texts
 from ..search import perform_phone_search, perform_general_search
 from ..table_utils import send_results_message, save_results_as_html
@@ -116,14 +115,22 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if text == texts[lang].get("instruction_cmd", "инструкция").lower():
         # Здесь можно использовать один из вариантов:
         # Если инструкция хранится в отдельном ключе:
-        await update.message.reply_text(
-            texts[lang].get(
-                "instruction_text",
-                "Инструкция по использованию бота:\n"
-                "1. Выберите режим поиска ('Общий поиск' или 'Поиск по номеру телефона').\n"
-                "2. Введите поисковый запрос.\n"
-                "3. Бот выполнит поиск и вернет результаты (например, 10 записей из каждой таблицы).")
-        )
+        if is_admin(user_id):
+            # отправляем админ‑версию
+            await update.message.reply_text(
+                texts[lang].get(
+                    "admin_instruction_text",
+                    "Админ‑инструкция не задана, обратитесь к разработчику"
+                )
+            )
+        else:
+            # отправляем обычную инструкцию
+            await update.message.reply_text(
+                texts[lang].get(
+                    "instruction_text",
+                    "Инструкция не найдена"
+                )
+            )
         return
 
     # Если пользователь уже выбрал режим поиска, обрабатываем его запрос
@@ -149,8 +156,19 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             # Выполнение поиска в отдельном потоке
             if mode == 'phone':
                 results = await asyncio.to_thread(perform_phone_search, query_text)
+                # инкрементим
+                user_id = str(update.effective_user.id)
+                USER_STATS.setdefault(user_id, {"general": 0, "phone": 0})
+                USER_STATS[user_id]["phone"] += 1
+                save_user_stats(USER_STATS)
+
             else:  # mode == 'general'
                 results = await asyncio.to_thread(perform_general_search, query_text)
+                user_id = str(update.effective_user.id)
+                # инкрементим
+                USER_STATS.setdefault(user_id, {"general": 0, "phone": 0})
+                USER_STATS[user_id]["general"] += 1
+                save_user_stats(USER_STATS)
 
             # Обновление статуса – обработка результатов
             progress_msg = texts[lang].get("processing_results", "Обработка результатов...")

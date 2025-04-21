@@ -34,7 +34,7 @@ texts = {
         'error': "Произошла ошибка при выполнении запроса.",
         'private_zone': "У вас нет прав для этой команды.",
         'enter_right_command': "Пожалуйста, выберите команду из меню или используйте /start для повторного вызова меню.",
-        'approve_user': "Новая заявка на доступ(для доступа укажите: /approve 123456789):",
+        'approve_user': "Новая заявка на доступ(для доступа укажите: /approve",
         'no_user_found': "Пользователь с таким id не найден в заявках.",
         'user': "Пользователь",
         'is_authorizied': "успешно авторизован",
@@ -47,6 +47,12 @@ texts = {
         'db_stats': 'Статистика БД',
         'server_stats': 'Характеристики сервера',
         'user_requests': 'Запросы пользователей',
+        "admin_instruction_text": (
+        "— /approve 123456789 – добавить пользователя\n"
+        "— /delete 123456789 – удалить пользователя\n"
+        "— /stats – счетчики поисков (общий и по телефону)\n"
+        "По пользователям и запросам – подробности в админ‑панели."
+        ),
     },
     'en': {
         'choose_language_start': "Please choose a language by executing /start",
@@ -83,7 +89,7 @@ texts = {
         'error': "An error occurred while processing the request.",
         'private_zone': "You do not have permission to use this command.",
         'enter_right_command': "Please select a command from the menu or use /start to re-display the menu.",
-        'approve_user': "New Request(approve by command: /approve 123456789):",
+        'approve_user': "New Request(approve by command: /approve",
         'no_user_found': "No user with this ID was found in the requests.",
         'user': "User",
         'is_authorizied': "has been successfully authorized",
@@ -96,5 +102,11 @@ texts = {
         'db_stats': 'DB Statistics',
         'server_stats': 'Server Statistics',
         'user_requests': 'User Requests',
+        "admin_instruction_text": (
+        "👮‍♂️ Админ‑инструкция:\n"
+        "— /approve 123456789 – approve user\n"
+        "— /delete 123456789 – delete user\n"
+        "— /stats – search stats\n"
+        ),
     }
 }

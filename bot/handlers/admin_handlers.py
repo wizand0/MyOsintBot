@@ -9,7 +9,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CallbackQueryHandler
 
 from ..auth import is_admin
-from ..config import ALLOWED_USERS, logger
+from ..config import ALLOWED_USERS, logger, USER_STATS
 from ..data import pending_requests, save_allowed_users  # импортируем список заявок
 from ..db import get_db_connection
 from ..language_texts import texts
@@ -366,3 +366,21 @@ async def show_pending_requests_as_inline(update: Update, context: ContextTypes.
             texts[lang]['choose_request'],
             reply_markup=reply_markup
         )
+
+
+async def stats_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if not is_admin(user.id):
+        return  # или reply “нет доступа”
+
+    # Формируем текст отчёта
+    lines = ["Статистика запросов по пользователям:"]
+    for uid, ctr in USER_STATS.items():
+        lines.append(f"  Пользователь {uid}: общий={ctr['general']}, телефон={ctr['phone']}")
+    text = "\n".join(lines) or "Нет данных"
+
+    await update.message.reply_text(text)
+
+    # Если нужно — сбросить после скачивания:
+    # USER_STATS.clear()
+    # save_user_stats(USER_STATS)

@@ -18,8 +18,9 @@ async def notify_admin(context: ContextTypes.DEFAULT_TYPE, applicant_id: int):
 
 
     try:
-        text1 = texts[lang].get("approve_user", "Новая заявка на доступ(для доступа укажите: /approve 123456789):")
-        message = f"{text1} {applicant_id}"
+        text1 = texts[lang].get("approve_user", "Новая заявка на доступ(для доступа укажите: /approve")
+        text2 = "):"
+        message = f"{text1} {applicant_id} {text2} {applicant_id}"
 
         await context.bot.send_message(chat_id=ADMIN_ID, text=message)
     except Exception as e:
