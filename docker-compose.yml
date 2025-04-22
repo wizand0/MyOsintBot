@@ -51,6 +51,8 @@ services:
   sphinx:
     build:
       context: ./docker/sphinx
+    env_file:
+      - ./bot/.env
     container_name: sphinx_search
     depends_on:
       - db
