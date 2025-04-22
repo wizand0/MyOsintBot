@@ -50,7 +50,8 @@ services:
 
   sphinx:
     build:
-      context: ./docker/sphinx
+      context: .
+      dockerfile: docker/sphinx/Dockerfile
     env_file:
       - ./bot/.env
     container_name: sphinx_search
