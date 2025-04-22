@@ -7,9 +7,9 @@ interactive_timeout   = 300
 # InnoDB
 innodb_buffer_pool_size        = 5G
 innodb_buffer_pool_instances   = 5
-innodb_log_file_size           = 256M
+innodb_log_file_size           = 1G
 innodb_log_files_in_group      = 2
-innodb_log_buffer_size         = 128M
+innodb_log_buffer_size         = 256M
 innodb_flush_method            = O_DIRECT
 
 # MyISAM / KEY buffer
