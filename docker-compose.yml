@@ -31,12 +31,16 @@ services:
 #    image: mariadb
     container_name: mariadb_server
     restart: always
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     env_file:
       - ./bot/.env
     ports:
       - "3306:3306"  # Если нужен проброс порта на хост-машину
     volumes:
-#      - ./docker/mysql/conf.d/99-custom.cnf:/etc/mysql/conf.d/99-custom.cnf:ro
+      - ./docker/mysql/conf.d/99-custom.cnf:/etc/mysql/conf.d/99-custom.cnf:ro
       - db_data:/var/lib/mysql
     networks:
       - app-network

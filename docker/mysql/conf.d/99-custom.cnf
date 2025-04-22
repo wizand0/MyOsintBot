@@ -1,22 +1,19 @@
-# 99-custom.cnf
+# ./docker/mysql/conf.d/99-custom.cnf
 
 [mysqld]
-# — для более полной диагностики
-performance_schema = ON
+performance_schema=ON
+wait_timeout=300
+interactive_timeout=300
 
-# — кеш открытых таблиц
-table_open_cache = 6000
+innodbbufferpool_size=5G
+innodbbufferpool_instances=5
+innodblogfile_size=256M
+innodblogfilesingroup=2
+innodblogbuffer_size=128M
+innodbflushmethod=O_DIRECT
 
-# — таймауты висящих соединений
-wait_timeout = 300
-interactive_timeout = 300
+keybuffersize=16M
 
-# — InnoDB: 70–80% RAM
-innodb_buffer_pool_size    = 2G
+tableopencache=2000
 
-# — общий размер redo-логов ~25% от буфера
-innodb_log_file_size       = 512M
-innodb_log_files_in_group  = 2
-
-# — буфер логов для больших транзакций
-innodb_log_buffer_size     = 128M
+openfileslimit=65535
