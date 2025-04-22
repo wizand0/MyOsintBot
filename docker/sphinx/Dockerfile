@@ -4,7 +4,8 @@ FROM macbre/sphinxsearch:latest
 
 
 # установим envsubst
-RUN apk apt-get update && apt-get install -y gettext-base
+# RUN apk apt-get update && apt-get install -y gettext-base
+RUN apk add --no-cache gettext
 
 # копируем tpl и скрипт
 COPY docker/sphinx/conf/sphinx.conf.tpl  /etc/sphinx/sphinx.conf.tpl
