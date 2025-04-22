@@ -1,12 +1,20 @@
- #!/usr/bin/env sh
- set -e
+#!/usr/bin/env sh
+set -e
 
- # подставляем нужные переменные из окружения
- envsubst
-   '${DB_HOST} ${DB_USER} ${DB_PASSWORD} ${DB_NAME} ${DB_PORT}'
-   < /etc/sphinx/sphinx.conf.tpl
-   > /etc/sphinx/sphinx.conf
+# ждём Марию
+until mysql -h "${DBHOST}" -u"${DBUSER}" -p"${DB_PASSWORD}" \
+     -e "SHOW DATABASES;" >/dev/null; do
+ echo "Waiting for MariaDB..."
+ sleep 2
+done
 
- # стартуем демона
- exec searchd --nodetach --config /etc/sphinx/sphinx.conf
+# генерим конфиг
+envsubst '${DBHOST} ${DBUSER} ${DBPASSWORD} ${DBNAME} ${DB_PORT}' \
+ < /etc/sphinx/sphinx.conf.tpl \
+ > /etc/sphinx/sphinx.conf
 
+# индексируем
+indexer --all --rotate
+
+# стартуем демона, причём путь к конфигу должен совпадать
+exec searchd --nodetach --config /etc/sphinx/sphinx.conf
