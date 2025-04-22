@@ -1,14 +1,11 @@
 # search.py
 import logging
-
-import aiomysql
-
 from typing import List, Dict
 
+import aiomysql
 from aiomysql import Pool
 
-from .config import DB_CONFIG, logger, USER_STATS
-from .data import save_user_stats
+from .config import DB_CONFIG, logger
 from .db import get_db_connection
 
 logger = logging.getLogger(__name__)
