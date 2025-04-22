@@ -18,9 +18,9 @@ index idx_main
 searchd
 {
     listen          = 9306:mysql41
-    log             = /var/log/sphinx/searchd.log
-    query_log       = /var/log/sphinx/query.log
-    pid_file        = /var/run/sphinx/searchd.pid
+    pid_file        = /tmp/searchd.pid
+    log             = /tmp/searchd.log
+    query_log       = /tmp/query.log
     max_children    = 30
     seamless_rotate = 1
     preopen_indexes = 1

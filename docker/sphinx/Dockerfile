@@ -3,6 +3,7 @@ FROM macbre/sphinxsearch:latest
 # создаём рабочие директории
 RUN mkdir -p /etc/sphinx
 
+
 # устанавливаем утилиты
 RUN apk update \
  && apk add --no-cache mariadb-client gettext dos2unix \
