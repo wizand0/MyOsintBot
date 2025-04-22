@@ -1,3 +1,4 @@
+# .\docker\sphinx\sphinx.conf.tpl
 source src_osint
 {
  type          = mysql
