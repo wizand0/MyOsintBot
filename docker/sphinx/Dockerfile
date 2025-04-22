@@ -4,8 +4,8 @@ FROM macbre/sphinxsearch:latest
 RUN mkdir -p /etc/sphinx
 
 # устанавливаем утилиты
-RUN apk update
- && apk add --no‑cache mariadb‑client gettext dos2unix
+RUN apk update \
+ && apk add --no‑cache mariadb‑client gettext dos2unix \
  && rm -rf /var/cache/apk/*
 
 # копируем шаблон конфига
