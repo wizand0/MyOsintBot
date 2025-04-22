@@ -60,11 +60,9 @@ services:
     environment:
       - DB_HOST=mariadb_server
       - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASSWORD=!w1JM6bD2If7
-#      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=osint_bd
-#      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
     ports:
       - "9306:9306"   # SphinxQL
       - "9312:9312"   # native protocol

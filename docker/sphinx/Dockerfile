@@ -3,6 +3,12 @@
 FROM macbre/sphinxsearch:latest
 COPY docker/sphinx/scripts/start-sphinx.sh /usr/local/bin/start-sphinx.sh
 RUN chmod +x /usr/local/bin/start-sphinx.sh
+
+RUN apt-get update  \
+    && apt-get install -y default-mysql-client  \
+    && rm -rf /var/lib/apt/lists/*
+
+
 # установим envsubst
 # RUN apk apt-get update && apt-get install -y gettext-base
 RUN apk add --no-cache gettext dos2unix
