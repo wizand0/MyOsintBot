@@ -13,7 +13,8 @@ from ..auth import is_authorized, is_admin
 from ..config import logger, USER_STATS
 from ..data import pending_requests, save_user_stats
 from ..language_texts import texts
-from ..search import perform_phone_search, perform_general_search, dbasync_perform_general_search, dbasync_perform_phone_search
+from ..search import perform_phone_search, perform_general_search, dbasync_perform_general_search, \
+    dbasync_perform_phone_search, sphinx_search_phone
 from ..table_utils import send_results_message, save_results_as_html
 from ..utils import notify_admin
 
@@ -159,7 +160,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             # Выполнение поиска в отдельном потоке
             if mode == 'phone':
                 # results = await asyncio.to_thread(perform_phone_search, query_text)
-                results = await dbasync_perform_phone_search(pool, query_text)
+                # results = await dbasync_perform_phone_search(pool, query_text)
+                results = await sphinx_search_phone(query_text)
                 # инкрементим
                 user_id = str(update.effective_user.id)
                 USER_STATS.setdefault(user_id, {"general": 0, "phone": 0})

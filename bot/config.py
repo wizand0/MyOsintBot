@@ -22,6 +22,9 @@ DB_CONFIG = {
     'port': int(os.getenv('DB_PORT', 3306))
 }
 
+SPHINX_HOST = os.getenv("SPHINX_HOST", "127.0.0.1")
+SPHINX_PORT = int(os.getenv("SPHINX_PORT", 9306))
+
 # Считываем идентификатор администратора
 ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
 

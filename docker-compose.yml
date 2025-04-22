@@ -12,8 +12,11 @@ services:
     restart: always
     environment:
       - HOST_LAN_IP=${YOUR_HOST_IP}
+      - SPHINX_HOST=sphinx
+      - SPHINX_PORT=9306
     depends_on:
       - db
+      - sphinx
     env_file:
       - ./bot/.env
     volumes:
@@ -45,9 +48,31 @@ services:
     networks:
       - app-network
 
+  sphinx:
+    build:
+      context: ./docker/sphinx
+    container_name: sphinx_search
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=mariadb_server
+      - DB_PORT=3306
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "9306:9306"   # SphinxQL
+      - "9312:9312"   # native protocol
+    volumes:
+      - sphinx_data:/var/lib/sphinxsearch/data
+    networks:
+      - app-network
+
 volumes:
   db_data:
+  sphinx_data:
 
 networks:
   app-network:
     driver: bridge
+
