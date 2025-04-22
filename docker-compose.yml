@@ -57,6 +57,24 @@ services:
     container_name: sphinx_search
     depends_on:
       - db
+    command: >
+      sh -c "
+        # ждём пока поднимется БД (ваша логика ожидания)
+        until mysqladmin ping -hmariadb_server --silent; do sleep 1; done &&
+      
+        # подготавливаем папки/права (как было):
+        mkdir -p /var/run/sphinx /var/log/sphinx /var/lib/sphinx/data &&
+        chown -R sphinx:sphinx /var/run/sphinx /var/log/sphinx /var/lib/sphinx/data &&
+      
+        # генерируем итоговый конфиг:
+        envsubst < /etc/sphinx/sphinx.conf.tpl > /etc/sphinx/sphinx.conf &&
+      
+        # индексируем (создаём файлы .sph, .spx и т.д.):
+        indexer --config /etc/sphinx/sphinx.conf --all --rotate &&
+      
+        # стартуем демона:
+        exec searchd --config /etc/sphinx/sphinx.conf --nodetach
+      "
     environment:
       - DB_HOST=mariadb_server
       - DB_PORT=3306

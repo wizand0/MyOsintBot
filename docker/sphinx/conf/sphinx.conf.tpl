@@ -10,10 +10,11 @@ source src1
 }
 
 index idx_main
-{
-    source          = src1
-    path            = /var/lib/sphinx/data/idx_main
-}
+   {
+     source    = src1
+     datadir   = /var/lib/sphinx/data
+     indexname = idx_main
+   }
 
 searchd
 {
