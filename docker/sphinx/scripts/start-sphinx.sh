@@ -1,25 +1,23 @@
-#!/bin/sh
-# docker\sphinx\scripts\start-sphinx.sh
-# ждём, пока поднимется БД
-until mysql -h "${DB_HOST}" -u"${DB_USER}" -p"${DB_PASSWORD}" -e "SHOW DATABASES;" &>/dev/null; do
- echo "Waiting for MariaDB..."
- sleep 2
+#!/usr/bin/env sh
+set -e
+
+# 1) Ждём поднятия MariaDB
+until mysql -h "$DB_HOST" -u"$DB_USER" -p"$DB_PASSWORD" \
+    -e "SHOW DATABASES;" &>/dev/null
+do
+  echo "Waiting for MariaDB…"
+  sleep 2
 done
 
+# 2) Подставляем переменные в шаблон
+envsubst '${DB_HOST} ${DB_USER} ${DB_PASSWORD} ${DB_NAME} ${DB_PORT}'  \
+  < /etc/sphinx/sphinx.conf.tpl \
+  > /etc/sphinx/sphinx.conf
 
-
- #!/usr/bin/env sh
- set -e
-
- # подставляем нужные переменные из окружения
- envsubst
-   '${DB_HOST} ${DB_USER} ${DB_PASSWORD} ${DB_NAME} ${DB_PORT}'
-   < /etc/sphinx/sphinx.conf.tpl
-   > /etc/sphinx/sphinx.conf
-
-
-# проиндексируем
+# 3) Индексируем
 indexer --all --rotate
-# запустим демона Sphinx
-exec searchd --nodetach --config /etc/sphinxsearch/sphinx.conf
+
+# 4) Запускаем демона
+exec searchd --nodetach --config /etc/sphinx/sphinx.conf
+# docker exec -it sphinx_search sh mysql -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES;"
 
