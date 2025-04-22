@@ -1,4 +1,5 @@
 #!/bin/sh
+# .\docker\sphinx\scripts\start-sphinx.sh
 set -e
 
 # --- опционально: ждём базу данных
