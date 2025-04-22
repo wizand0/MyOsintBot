@@ -1,5 +1,6 @@
 # .\docker\sphinx\Dockerfile
-FROM sphinxsearch/sphinx
+# FROM sphinxsearch/sphinx
+FROM macbre/sphinxsearch:latest
 
 # установим envsubst
 RUN apt-get update && apt-get install -y gettext-base
