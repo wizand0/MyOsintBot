@@ -4,9 +4,10 @@ FROM macbre/sphinxsearch:latest
 COPY docker/sphinx/scripts/start-sphinx.sh /usr/local/bin/start-sphinx.sh
 RUN chmod +x /usr/local/bin/start-sphinx.sh
 
-RUN apt-get update  \
-    && apt-get install -y default-mysql-client  \
-    && rm -rf /var/lib/apt/lists/*
+
+RUN apk update \
+    && apk add --no-cache mariadb-client \
+    && rm -rf /var/cache/apk/*
 
 
 # установим envsubst
