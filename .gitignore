@@ -3,6 +3,7 @@
 
 ### dotenv ###
 .idea
+docker-compose.yml
 .git
 .env
 bot/.env
