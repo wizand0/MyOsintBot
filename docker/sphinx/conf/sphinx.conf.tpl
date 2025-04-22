@@ -1,20 +1,20 @@
 source src1
 {
-    type            = mysql
-    sql_host        = $DB_HOST
-    sql_user        = $DB_USER
-    sql_pass        = $DB_PASSWORD
-    sql_db          = $DB_NAME
-    sql_port        = $DB_PORT
-    sql_query       = SELECT id, title, content FROM documents
+    type     = mysql
+    sqlhost = mariadbserver
+    sql_user = wizand0
+    sql_pass = Pol2E16Li3O4
+    sqldb   = osintbd
+    sql_port = 3306
+    sql_query= SELECT id, title, content FROM documents
 }
 
 index idx_main
-   {
-     source    = src1
-     datadir   = /var/lib/sphinx/data
-     indexname = idx_main
-   }
+{
+    source = src1
+    # единый путь + базовое имя; .sph, .spi, .spd и т.п. сформируются автоматически
+    path   = /var/lib/sphinx/data/idx_main
+}
 
 searchd
 {
@@ -22,7 +22,6 @@ searchd
     pid_file        = /tmp/searchd.pid
     log             = /tmp/searchd.log
     query_log       = /tmp/query.log
-    max_children    = 30
     seamless_rotate = 1
     preopen_indexes = 1
     unlink_old      = 1
