@@ -1,19 +1,20 @@
 # ./docker/mysql/conf.d/99-custom.cnf
-
 [mysqld]
-performance_schema=ON
-wait_timeout=300
-interactive_timeout=300
+performance_schema = ON
+wait_timeout          = 300
+interactive_timeout   = 300
 
-innodbbufferpool_size=5G
-innodbbufferpool_instances=5
-innodblogfile_size=256M
-innodblogfilesingroup=2
-innodblogbuffer_size=128M
-innodbflushmethod=O_DIRECT
+# InnoDB
+innodb_buffer_pool_size        = 5G
+innodb_buffer_pool_instances   = 5
+innodb_log_file_size           = 256M
+innodb_log_files_in_group      = 2
+innodb_log_buffer_size         = 128M
+innodb_flush_method            = O_DIRECT
 
-keybuffersize=16M
+# MyISAM / KEY buffer
+key_buffer_size                = 16M
 
-tableopencache=2000
-
-openfileslimit=65535
+# Cache / limits
+table_open_cache               = 2000
+open_files_limit               = 65535
