@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # docker\sphinx\scripts\start-sphinx.sh
 # ждём, пока поднимется БД
 until mysql -h "${DB_HOST}" -u"${DB_USER}" -p"${DB_PASSWORD}" -e "SHOW DATABASES;" &>/dev/null; do
