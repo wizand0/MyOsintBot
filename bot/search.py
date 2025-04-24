@@ -8,6 +8,10 @@ from aiomysql import Pool
 from .config import DB_CONFIG, logger
 from .db import get_db_connection
 
+from .config import SPHINX_HOST, SPHINX_PORT
+
+_sphinx_pool = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -259,3 +263,35 @@ async def dbasync_perform_phone_search(pool: Pool, search_query: str) -> list[di
         logger.exception("Критическая ошибка в dbasync_perform_search:")
 
     return results
+
+
+async def get_sphinx_pool():
+    global _sphinx_pool
+    if _sphinx_pool is None:
+        _sphinx_pool = await aiomysql.create_pool(
+            host=SPHINX_HOST,
+            port=SPHINX_PORT,
+            user="",  # в SphinxQL можно пустые
+            password="",
+            db="",
+            minsize=1,
+            maxsize=5,
+            autocommit=True,
+        )
+        return _sphinx_pool
+
+async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
+   pool = await get_sphinx_pool()
+   async with pool.acquire() as conn:
+       async with conn.cursor(aiomysql.DictCursor) as cur:
+           # MATCH ‑ prefix‑поиск по phone_number
+           match = f"@phone_number {prefix}*"
+           sql = (
+               "SELECT id, phone_number, weight() AS score "
+               "FROM osint_idx "
+               "WHERE MATCH(%s) "
+               "LIMIT %s"
+           )
+           await cur.execute(sql, (match, limit))
+           rows = await cur.fetchall()
+           return rows

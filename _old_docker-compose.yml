@@ -1,0 +1,98 @@
+#docker-compose.yml
+services:
+  bot:
+    build:
+      context: .
+#      context: ./docker/bot
+      dockerfile: Dockerfile
+    privileged: true
+    cap_add:
+      - SYS_RAWIO
+    container_name: myosint_bot
+    restart: always
+    environment:
+      - HOST_LAN_IP=${YOUR_HOST_IP}
+      - SPHINX_HOST=sphinx
+      - SPHINX_PORT=9306
+    depends_on:
+      - db
+      - sphinx
+    env_file:
+      - ./bot/.env
+    volumes:
+      - /proc/loadavg:/host_loadavg:ro
+      - /proc/uptime:/host_uptime:ro
+# !!!!!!!!!!! Раскомментировать в Linux
+#      - /sys/class/hwmon:/host_sys/class/hwmon:ro
+    networks:
+      - app-network
+
+  db:
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+#    image: mariadb
+    container_name: mariadb_server
+    restart: always
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    env_file:
+      - ./bot/.env
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3306:3306"  # Если нужен проброс порта на хост-машину
+    volumes:
+      - ./docker/mysql/conf.d/99-custom.cnf:/etc/mysql/conf.d/99-custom.cnf:ro
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
+
+  sphinx:
+    build:
+      context: .
+      dockerfile: docker/sphinx/Dockerfile
+    env_file:
+      - ./bot/.env
+    container_name: sphinx_search
+    depends_on:
+      db:
+        condition: service_started
+    command:
+      - sh
+      - -c
+      - |
+        until mysqladmin ping -h${DB_HOST} --silent; do sleep 1; done
+        mkdir -p /var/run/sphinx /var/log/sphinx /var/lib/sphinx/data
+        chown -R sphinx:sphinx /var/run/sphinx /var/log/sphinx /var/lib/sphinx/data
+        envsubst < /etc/sphinx/sphinx.conf.tpl > /etc/sphinx/sphinx.conf
+        indexer --config /etc/sphinx/sphinx.conf --all --rotate
+        exec searchd --config /etc/sphinx/sphinx.conf --nodetach
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+    ports:
+      - "9306:9306"   # SphinxQL
+      - "9312:9312"   # native protocol
+    volumes:
+      - sphinx_data:/var/lib/sphinx/data
+    networks:
+      - app-network
+
+volumes:
+  db_data:
+  sphinx_data:
+
+networks:
+  app-network:
+    driver: bridge
+
