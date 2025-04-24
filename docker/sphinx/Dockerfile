@@ -1,46 +1,23 @@
-# FROM macbre/sphinxsearch:latest
-#
-# # создаём рабочие директории
-# RUN mkdir -p /etc/sphinx
-#
-#
-# # устанавливаем утилиты
-# RUN apk update \
-#  && apk add --no-cache mariadb-client gettext dos2unix \
-#  && rm -rf /var/cache/apk/*
-#
-# # копируем шаблон конфига
-# COPY docker/sphinx/conf/sphinx.conf.tpl /etc/sphinx/sphinx.conf.tpl
-#
-# # копируем и правим скрипт запуска
-# COPY docker/sphinx/scripts/start-sphinx.sh /usr/local/bin/start-sphinx.sh
-# RUN dos2unix /usr/local/bin/start-sphinx.sh \
-#  && chmod +x    /usr/local/bin/start-sphinx.sh
-#
-# ENTRYPOINT ["/usr/local/bin/start-sphinx.sh"]
-# CMD []
- \
+FROM debian:buster-slim
 
- FROM macbre/sphinxsearch:latest
+ENV SPHINX_VERSION=latest
 
-# --- зависимости для работы
-RUN apk update \
- && apk add --no-cache mariadb-client gettext dos2unix \
- && rm -rf /var/cache/apk/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    sphinxsearch \
+ && rm -rf /var/lib/apt/lists/*
 
-# --- создаём директорию для конфига и индексов
-RUN mkdir -p /etc/sphinx /var/lib/sphinx/data \
- && chown -R sphinx:sphinx /etc/sphinx /var/lib/sphinx
+RUN mkdir -p /var/lib/sphinxsearch/data && chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch
 
-# --- копируем шаблон конфига
-COPY docker/sphinx/conf/sphinx.conf.tpl /etc/sphinx/sphinx.conf.tpl
+# COPY sphinx-entrypoint.sh /usr/local/bin/
 
-# --- копируем и готовим entrypoint-скрипт
-COPY docker/sphinx/scripts/start-sphinx.sh /usr/local/bin/start-sphinx.sh
-RUN dos2unix /usr/local/bin/start-sphinx.sh \
- && chmod +x    /usr/local/bin/start-sphinx.sh
+# COPY sphinx.conf.template /etc/sphinxsearch/
+COPY Dockerfile /etc/sphinxsearch/test.txt
 
-# --- прописываем entrypoint
-ENTRYPOINT ["/usr/local/bin/start-sphinx.sh"]
-# можно задать CMD на случай, если захотите передать что‑то в скрипт
-CMD []
+COPY sphinx.conf /etc/sphinxsearch/sphinx.conf
+COPY sphinx-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/sphinx-entrypoint.sh
+
+USER sphinxsearch
+
+ENTRYPOINT ["sphinx-entrypoint.sh"]
+CMD ["searchd","--nodetach","--config","/etc/sphinxsearch/sphinx.conf"]

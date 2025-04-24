@@ -160,8 +160,8 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             # Выполнение поиска в отдельном потоке
             if mode == 'phone':
                 # results = await asyncio.to_thread(perform_phone_search, query_text)
-                # results = await dbasync_perform_phone_search(pool, query_text)
-                results = await sphinx_search_phone(query_text)
+                results = await dbasync_perform_phone_search(pool, query_text)
+                # results = await sphinx_search_phone(query_text)
                 # инкрементим
                 user_id = str(update.effective_user.id)
                 USER_STATS.setdefault(user_id, {"general": 0, "phone": 0})
