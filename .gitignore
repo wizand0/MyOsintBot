@@ -12,6 +12,8 @@ env
 structure.txt
 user_settings.json
 
+docker/sphinx/sphinx.conf
+
 results.html
 .bot/allowed_users.json
 user_settings.json

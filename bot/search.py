@@ -271,14 +271,14 @@ async def get_sphinx_pool():
         _sphinx_pool = await aiomysql.create_pool(
             host=SPHINX_HOST,
             port=SPHINX_PORT,
-            user="",  # в SphinxQL можно пустые
+            user="",
             password="",
             db="",
             minsize=1,
             maxsize=5,
             autocommit=True,
         )
-        return _sphinx_pool
+    return _sphinx_pool  # <-- ВОТ ЭТО!
 
 async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
    pool = await get_sphinx_pool()
@@ -288,8 +288,8 @@ async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
                return []  # или обработайте ошибку
            match = f"@phone_number \"{prefix}\""
            sql = (
-               f"SELECT * "
-               f"FROM idx1 "
+               f"SELECT id, table_name "
+               f"FROM idx_all_phone_numbers "
                f"WHERE MATCH('{match}') "
                f"LIMIT {int(limit)}"
            )
@@ -297,22 +297,54 @@ async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
            rows = await cur.fetchall()
            return rows
 
-           # SELECT * FROM
-           # idx1
-           # WHERE
-           # MATCH('@phone_number "79152151368"')
-           # LIMIT
-           # 10;
+async def get_rows_from_db(db_pool: Pool, ids_by_table: dict) -> list[dict]:
+    ID_FIELDS = {
+        'avito_full': '_avito_id',
+        'beeline_full': '_beeline_id',
+        'cdek_full': '_cdek_id',
+        'delivery2_full': '_delivery2_id',
+        'delivery_full': '_delivery_id',
+        'gibdd2_full': '_gibdd2_id',
+        'linkedin_full': '_linkedin_id',
+        'mailru_full': '_mailru_id',
+        'okrug_full': '_okrug_id',
+        'pikabu_full': '_pikabu_id',
+        'rfcont_full': '_rfcont_id',
+        'sushi_full': '_sushi_id',
+        'vtb_full': '_vtb_id',
+        'wildberries_full': '_wildberries_id',
+        'yandex_full': '_yandex_id'
+        # добавьте все нужные таблицы
+    }
 
+    # db_pool = await get_sphinx_pool()
+    # ids_by_table: {'table1': [id1, id2], 'table2': [id3]}
+    results = []
+    for table, ids in ids_by_table.items():
+        if not ids:
+            continue
+        id_field = ID_FIELDS.get(table)
+        if not id_field:
+            raise ValueError(f"Неизвестное имя id-поля для таблицы {table}")
+        # используйте асинхронный коннект к вашей БД
+        sql = f"SELECT * FROM {table} WHERE {id_field} IN ({','.join(['%s']*len(ids))})"
+        async with db_pool.acquire() as conn:
+            async with conn.cursor(aiomysql.DictCursor) as cur:
+                await cur.execute(sql, ids)
+                rows = await cur.fetchall()
+                for row in rows:
+                    row['table_name'] = table
+                results.extend(rows)
+    return results
 
-           # MATCH ‑ prefix‑поиск по phone_number
-           # match = f"@phone_number {prefix}*"
-           # sql = (
-           #     "SELECT id, phone_number, weight() AS score "
-           #     "FROM idx1 "
-           #     "WHERE MATCH(%s) "
-           #     "LIMIT %s"
-           # )
-           # await cur.execute(sql, (match, limit))
-           # rows = await cur.fetchall()
-           # return rows
+async def search_phone_full(db_pool: Pool, prefix: str, limit: int = 10) -> list[dict]:
+    sphinx_rows = await sphinx_search_phone(prefix, limit)
+    # сгруппировать id по таблице
+    ids_by_table = {}
+    for row in sphinx_rows:
+        table = row['table_name']
+        ids_by_table.setdefault(table, []).append(row['id'])
+    # получить полные записи из БД
+    full_results = await get_rows_from_db(db_pool, ids_by_table)
+    return full_results
+
