@@ -284,14 +284,35 @@ async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
    pool = await get_sphinx_pool()
    async with pool.acquire() as conn:
        async with conn.cursor(aiomysql.DictCursor) as cur:
-           # MATCH ‑ prefix‑поиск по phone_number
-           match = f"@phone_number {prefix}*"
+           if not prefix.isdigit():
+               return []  # или обработайте ошибку
+           match = f"@phone_number \"{prefix}\""
            sql = (
-               "SELECT id, phone_number, weight() AS score "
-               "FROM osint_idx "
-               "WHERE MATCH(%s) "
-               "LIMIT %s"
+               f"SELECT * "
+               f"FROM idx1 "
+               f"WHERE MATCH('{match}') "
+               f"LIMIT {int(limit)}"
            )
-           await cur.execute(sql, (match, limit))
+           await cur.execute(sql)
            rows = await cur.fetchall()
            return rows
+
+           # SELECT * FROM
+           # idx1
+           # WHERE
+           # MATCH('@phone_number "79152151368"')
+           # LIMIT
+           # 10;
+
+
+           # MATCH ‑ prefix‑поиск по phone_number
+           # match = f"@phone_number {prefix}*"
+           # sql = (
+           #     "SELECT id, phone_number, weight() AS score "
+           #     "FROM idx1 "
+           #     "WHERE MATCH(%s) "
+           #     "LIMIT %s"
+           # )
+           # await cur.execute(sql, (match, limit))
+           # rows = await cur.fetchall()
+           # return rows
