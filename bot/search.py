@@ -5,6 +5,7 @@ from typing import List, Dict
 import aiomysql
 from aiomysql import Pool
 
+from . import id_fields_db
 from .config import DB_CONFIG, logger
 from .db import get_db_connection
 
@@ -298,24 +299,13 @@ async def sphinx_search_phone(prefix: str, limit: int = 10) -> list[dict]:
            return rows
 
 async def get_rows_from_db(db_pool: Pool, ids_by_table: dict) -> list[dict]:
-    ID_FIELDS = {
-        'avito_full': '_avito_id',
-        'beeline_full': '_beeline_id',
-        'cdek_full': '_cdek_id',
-        'delivery2_full': '_delivery2_id',
-        'delivery_full': '_delivery_id',
-        'gibdd2_full': '_gibdd2_id',
-        'linkedin_full': '_linkedin_id',
-        'mailru_full': '_mailru_id',
-        'okrug_full': '_okrug_id',
-        'pikabu_full': '_pikabu_id',
-        'rfcont_full': '_rfcont_id',
-        'sushi_full': '_sushi_id',
-        'vtb_full': '_vtb_id',
-        'wildberries_full': '_wildberries_id',
-        'yandex_full': '_yandex_id'
-        # добавьте все нужные таблицы
-    }
+    ID_FIELDS = id_fields_db.ID_FIELDS
+
+    # It is an dictionary for id fields in db tables (in my tables all id_fields have different names ;) )
+    # ID_FIELDS = {
+    #     'table1': 'table1_id_field',
+    #     'table2': 'table2_id_field',
+    # }
 
     # db_pool = await get_sphinx_pool()
     # ids_by_table: {'table1': [id1, id2], 'table2': [id3]}
@@ -337,7 +327,7 @@ async def get_rows_from_db(db_pool: Pool, ids_by_table: dict) -> list[dict]:
                 results.extend(rows)
     return results
 
-async def search_phone_full(db_pool: Pool, prefix: str, limit: int = 10) -> list[dict]:
+async def sphinx_search_phone_full(db_pool: Pool, prefix: str, limit: int = 10) -> list[dict]:
     sphinx_rows = await sphinx_search_phone(prefix, limit)
     # сгруппировать id по таблице
     ids_by_table = {}

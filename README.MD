@@ -129,15 +129,18 @@ MyBot is a Telegram bot designed for Mysql searching tasks. The bot provides a s
 
    • Update allowed_users.json with the list of authorized Telegram user IDs.
 
+**Attention** Please select a search method in user_handlers.py (lines 163-167): if your base is not big use dbasync_perform_phone_search - it is simple, just erase "#" and comment this line(167) **results = await sphinx_search_phone_full(pool, query_text)**
+My DB is about 100_000_000 lines and it takes **15 minutes** to find something
+For fast search use sphinx_search_phone_full (search takes 10 seconds)
+for use Sphinx your need to rename example_sphinx.conf to sphinx.conf and  edit it.
+
+After editing you need to index all tables (**before this please edit sphinx.conf**)
+```
+docker exec sphinx indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
+```
    
 3. Running the Bot  
 
-   • The main entry point is in bot/main.py. Ensure you run the script (or the Docker container) in the appropriate context:
-     
-     python bot/main.py
-     
-
-   
 4. Interacting with the Bot  
 
    • Once the bot is running, interact with it on Telegram:

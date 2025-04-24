@@ -12,7 +12,7 @@ chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch || true
 # если вызывают именно searchd – перед запуском пробуем один раз проиндексировать
 if [ "$1" = "searchd" ]; then
   printf "[entrypoint] First run indexer --all --rotate"
-  indexer --all --rotate || true
+  indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf || true
 fi
 
 #chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch
