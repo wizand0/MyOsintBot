@@ -128,3 +128,66 @@ MySQL [(none)]> SHOW TABLES;
 
 MySQL [(none)]> SELECT COUNT(*) FROM idx1;
 ERROR 1064 (42000): index idx1: fullscan requires extern docinfo
+
+
+
+Чтобы посмотреть логи каждого контейнера, используйте команду:
+```
+docker logs <container_name>
+```
+
+или
+```
+docker logs <container_id>
+```
+
+В вашем случае:
+
+1. myosint_bot  
+   ```
+   docker logs myosint_bot
+   ```
+
+2. mariadb_server  
+   ```
+   docker logs mariadb_server
+   ```
+
+3. sphinx  
+   ```
+   docker logs sphinx
+   ```
+
+---
+
+▎Дополнительно
+
+• Чтобы смотреть логи в реальном времени (как tail -f):
+  ```
+  docker logs -f <container_name>
+  ```
+
+• Для просмотра только последних строк:
+  ```
+  docker logs --tail 100 <container_name>
+  ```
+
+---
+
+Пример:
+```
+docker logs -f myosint_bot
+```
+Остановить просмотр — Ctrl+C.
+
+
+Для периодического индексирования:
+
+• Самый чистый способ — запускать cron на хосте или в отдельном контейнере, который будет выполнять  
+  ```
+  docker exec sphinx_container_name indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
+  ```
+
+4. Если добавляются новые таблицы:  
+Sphinx не умеет автоматически индексировать новые таблицы — вы должны добавить их в конфиг и перезапустить индексирование (indexer).
+
