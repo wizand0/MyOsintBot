@@ -61,16 +61,15 @@ services:
       - "9306:9306"
     volumes:
       # ваш конфиг
-      - ./sphinx.conf:/etc/sphinxsearch/sphinx.conf:ro
-      # для хранения данных индексов, логов и pid
-#      - sphinx-data:/var/lib/sphinxsearch
+      - ./docker/sphinx/sphinx.conf:/etc/sphinxsearch/sphinx.conf:ro
+      - sphinx-data:/var/lib/sphinxsearch
       - sphinx-logs:/var/log/sphinxsearch
       - sphinx-run:/var/run/sphinxsearch
     networks:
       - app-network
 volumes:
   db_data:
-#  sphinx-data:
+  sphinx-data:
   sphinx-run:
   sphinx-logs:
 

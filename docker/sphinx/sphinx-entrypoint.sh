@@ -2,7 +2,12 @@
 set -e
 
 # Генерируем sphinx.conf из шаблона
-#envsubst < /etc/sphinxsearch/sphinx.conf.template > /etc/sphinxsearch/sphinx.conf
+
+# Создаём директорию для индексов, если не существует
+mkdir -p /var/lib/sphinxsearch/data
+
+# Пробуем сменить владельца, если есть права (можно обернуть в if)
+chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch || true
 
 # если вызывают именно searchd – перед запуском пробуем один раз проиндексировать
 if [ "$1" = "searchd" ]; then
@@ -10,7 +15,7 @@ if [ "$1" = "searchd" ]; then
   indexer --all --rotate || true
 fi
 
-chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch
+#chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch
 
 # передаём всё управление дальше
 exec "$@"

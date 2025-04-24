@@ -105,3 +105,26 @@ FLUSH PRIVILEGES;
    ```
    mysql -u wizand0 -p -h 127.0.0.1 -P 3306 osint_bd
    ```
+   
+
+root@2f8f18eae77c:/# apt install -y default-mysql-client
+
+root@2f8f18eae77c:/# mysql -h 127.0.0.1 -P9306                                                                                                                                                                                                                
+Welcome to the MariaDB monitor.  Commands end with ; or \g.                                                                                                                                                                                                   
+Your MySQL connection id is 1
+Server version: 2.2.11-id64-release (95ae9a6) 
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]> SHOW TABLES;
++-------+-------+
+| Index | Type  |
++-------+-------+
+| idx1  | local |
++-------+-------+
+1 row in set (0.000 sec)
+
+MySQL [(none)]> SELECT COUNT(*) FROM idx1;
+ERROR 1064 (42000): index idx1: fullscan requires extern docinfo
