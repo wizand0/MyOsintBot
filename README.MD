@@ -2,14 +2,14 @@
 
 ## Ru, En - Localization
 
-## RU
+### RU
 [Инструкция по использованию - RU](docs/ru_usage.md)<br>
 [Запуск и настройка - RU](docs/ru_configuration.md)<br>
 [Работа с БД MySQL - RU](docs/ru_db.md)<br>
 [Полезное и работа c контейнерами Docker - RU](docs/ru_docker.md)<br>
 [Полезные инструменты - RU](docs/ru_helps.md)<br>
 
-## RU
+### RU
 [Instruction - EN](docs/en_usage.md)<br>
 [Deploy - EN](docs/en_configuration.md)<br>
 [Work with MySQL - EN](docs/en_db.md)<br>
@@ -18,113 +18,102 @@
 
 The following screenshots illustrate key parts of the application:
 
-|             Main screen              |
+|     Main screen  (administrator)     |
 |:------------------------------------:|
 | ![screenshot](images/screenshot.png) |
 
 
-▎English
+▎Telegram Bot for Fast Database Search in Docker Containers
 
-▎Overview
+## English
 
-MyBot is a Telegram bot designed for Mysql searching tasks. The bot provides a set of functions for authorized users and administrators to perform various searches and manage user settings. Its modular architecture ensures that functionalities such as authentication, handling different types of queries, and formatting search results are cleanly separated into individual modules. It is deployed via Docker and supports a range of features with an emphasis on usability and scalability.
+### Overview
 
-▎Functionality and Capabilities
+This project is a Telegram bot designed for efficient search and retrieval of information from large databases (MariaDB) using phone numbers or general keyword queries. The system is containerized with Docker Compose and leverages Sphinx Search for high-speed full-text indexing, reducing search time from minutes to seconds even with databases containing hundreds of millions of rows. The repository also includes utilities for database management and project maintenance.
 
-1. User and Admin Authentication  
+### Features
 
-   • The auth.py module contains functions for user authorization:
+• Fast Search: Uses Sphinx Search for rapid full-text queries, making searches up to 100x faster compared to standard SQL queries.
 
-     • is_authorized: Checks if a user is allowed to access the bot.
+• Flexible Queries: Search by phone number or by keywords.
 
-     • is_admin: Determines if the current user has administrative privileges.
+• User Management: Authorization and admin roles for secure access.
 
-   • Additionally, allowed_users.json stores the list of permitted users.
+• Utility Scripts: Tools for batch importing SQL dumps, splitting large dumps, generating project tree structures, and more.
 
-2. User Settings and Menu Interaction  
+• Dockerized: Easily deployable using Docker Compose with separate containers for the bot, MariaDB, and Sphinx Search.
 
-   • Handlers in handlers.py and commonhandlers.py include:
+• Extensible Handlers: Modular code structure for easy customization and extension.
 
-     • load_user_settings and save_user_settings: Manage user-specific settings.
+### Project Structure
+```
+project-root/
+├── .gitignore
+├── Dockerfile
+├── README.MD
+├── bot/
+│   ├── _handlers.py
+│   ├── auth.py
+│   ├── config.py
+│   ├── data.py
+│   ├── db.py
+│   ├── handlers/
+│   │   ├── admin_handlers.py
+│   │   ├── bot_core.py
+│   │   ├── common_handlers.py
+│   │   ├── language_handlers.py
+│   │   └── user_handlers.py
+│   ├── id_fields_db.py
+│   ├── language_texts.py
+│   ├── main.py
+│   ├── search.py
+│   ├── table_utils.py
+│   ├── user_stats.json
+│   └── utils.py
+├── docker/
+│   ├── bot/
+│   │   └── Dockerfile
+│   ├── mysql/
+│   │   ├── Dockerfile
+│   │   └── conf.d/
+│   │       └── 99-custom.cnf
+│   └── sphinx/
+│       ├── Dockerfile
+│       ├── example_sphinx.conf
+│       └── sphinx-entrypoint.sh
+├── docker-compose.yml
+├── requirements.txt
+└── some_things/
+    ├── README.MD
+    ├── generate_tree.py
+    ├── import_all_sql.bat
+    ├── import_all_sql.sh
+    └── split_sql.sh
+```
 
-     • build_menu_keyboard: Constructs interactive menu keyboards for users.
+### How It Works
 
-   • The bot utilizes language texts provided in language_texts.py to offer localized user interfaces.
+1. MariaDB Container: Hosts the main database with all the data.
 
-3. Search Capabilities  
+2. Sphinx Search Container: Indexes the MariaDB tables for instant full-text search.
 
-   • The search.py module offers advanced search functions:
+3. Telegram Bot Container: Receives user queries via Telegram, searches the database using Sphinx, and returns results.
 
-     • perform_general_search: Conducts general data searches.
+4. Utility Scripts: Help with importing, splitting, and managing large SQL dumps.
 
-     • perform_phone_search: Executes searches specifically related to phone numbers.
+### Getting Started
 
-   • The bot collates search results and offers them in both textual and tabulated formats.
+1. Clone this repository.
 
-4. Data Presentation  
+2. Configure environment variables and settings in bot/config.py and docker/.
 
-   • The table_utils.py module provides utilities to convert result data into human-readable formats:
+3. Build and start all containers:
+    ```
+    docker-compose up --build
+    ```
 
-     • build_ascii_table: Generates a text table view.
+4. Use the utility scripts in some_things/ as needed.
 
-     • build_html_table and save_results_as_html: Create HTML representations of the data.
-
-   
-5. Database Integration  
-
-   • Through db.py, the bot establishes database connections using get_db_connection to store or retrieve data essential for the operations.
-
-6. Modular Handlers for Specific Tasks  
-
-   • The handlers directory includes:
-
-     • admin_handlers.py for management operations.
-
-     • user_handlers.py for general user operations.
-
-     • language_handlers.py for language-specific actions.
-
-   • This structure enables the bot to separate functionality according to user roles and internationalization needs.
-
-7. Utility Functions and Configuration  
-
-   • Utility functions found in utils.py assist in various general tasks.
-
-   • The config.py file holds configuration settings, ensuring the bot can be easily adjusted for different environments.
-
-8. Deployment and Setup  
-
-   • The project is containerized with Dockerfile and uses docker-compose.yml for easy multi-container orchestration.
-
-   • For database setup, scripts like importallsql.sh and importallsql.bat automate the import of necessary SQL files.
-
-9. Project Maintenance and Code Inspection  
-
-   • Tools like generate_tree.py help in visualizing the project structure and extracting function definitions.
-
-   • The project includes a .gitignore ensuring that unnecessary files (log files, caches, etc.) are excluded from version control.
-
-▎Usage Instructions
-
-1. Installation and Setup  
-
-   • Install the required dependencies by running:
-     
-     pip install -r requirements.txt
-     
-
-   • Build the Docker container using:
-     
-     docker build -t myntbot .
-     
-
-   • Alternatively, use docker-compose:
-     
-     docker-compose up --build
-     
-
-   
-2. Configuration
 • Adjust settings in config.py according to your environment.
 
    • Update allowed_users.json with the list of authorized Telegram user IDs.
@@ -138,107 +127,128 @@ After editing you need to index all tables (**before this please edit sphinx.con
 ```
 docker exec sphinx indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
 ```
-   
-3. Running the Bot  
 
-4. Interacting with the Bot  
+### Requirements
 
-   • Once the bot is running, interact with it on Telegram:
+• Docker  Docker Compose
 
-     • Use the provided commands to perform searches.
+• Telegram Bot API token (set in config)
 
-     • Admins can use additional commands to manage the bot and user settings.
-
-   
-5. Extending Functionality  
-
-   • Developers can add new handlers or utilities by following the existing module structure. New functionalities should integrate seamlessly due to the modular design.
+• Python 3.8+
 
 
-▎Обзор
+## Русский
 
-MyBot — это Telegram-бот, предназначенный для задач поиска инфомрации в ваших базх данных MySQL. Бот предоставляет набор функций для авторизованных пользователей и администраторов, позволяющих выполнять различные поисковые операции и управлять настройками пользователей. Его модульная архитектура обеспечивает разделение функционала, такого как аутентификация, обработка запросов и форматирование результатов поиска, что упрощает дальнейшую разработку и поддержание проекта. Развёртывание осуществляется с помощью Docker, а акцент ставится на удобстве использования и масштабируемости.
+### Описание
 
-▎Функциональность и возможности
+Данный проект — это Телеграм-бот для быстрого поиска информации в больших базах данных (MariaDB) по номеру телефона или ключевым словам. Вся система развернута в контейнерах через Docker Compose и использует Sphinx Search для ускоренного полнотекстового поиска, что позволяет сократить время поиска с 15 минут до нескольких секунд даже на базе с сотнями миллионов строк. В репозитории также есть утилиты для управления базой и обслуживания проекта.
 
-1. Аутентификация пользователей и администраторов  
+### Возможности
 
-   • Модуль auth.py содержит функции для проверки авторизации:
+• Быстрый поиск: Благодаря Sphinx Search поиск по базе происходит до 100 раз быстрее стандартных SQL-запросов.
 
-     • is_authorized: проверяет, имеет ли пользователь доступ к боту.
+• Гибкие запросы: Поиск по номеру телефона или по ключевым словам.
 
-     • is_admin: определяет, обладает ли пользователь административными правами.
+• Управление пользователями: Авторизация и разделение ролей (админ/пользователь).
 
-   • Файл allowed_users.json хранит список разрешённых пользователей.
+• Вспомогательные скрипты: Для пакетного импорта дампов SQL, разделения больших дампов, создания дерева проекта и других задач.
 
-2. Настройки пользователей и взаимодействие через меню  
+• Контейнеризация: Легкий запуск через Docker Compose — отдельные контейнеры для бота, MariaDB и Sphinx Search.
 
-   • Обработчики в handlers.py и commonhandlers.py предоставляют следующие возможности:
+• Модульная архитектура: Удобная структура кода для расширения и кастомизации.
 
-     • load_user_settings и save_user_settings: загрузка и сохранение настроек пользователя.
+### Структура проекта
 
-     • build_menu_keyboard: создание интерактивного меню для пользователей.
-
-   • Для локализации интерфейса бот использует тексты, определённые в language_texts.py.
-
-3. Поисковые возможности  
-
-   • Модуль search.py предлагает расширенные функции поиска:
-
-     • perform_general_search: выполнение общего поиска данных.
-
-     • perform_phone_search: осуществление поиска по телефонным номерам.
-
-   • Бот собирает результаты поиска и отображает их в текстовом и табличном формате.
-
-4. Представление данных
-• Модуль table_utils.py включает утилиты для преобразования результатов в удобный для чтения формат:
-
-     • build_ascii_table: создание таблицы в текстовом виде.
-
-     • build_html_table и save_results_as_html: генерация HTML-таблиц для представления данных.
-
-5. Интеграция с базой данных  
-
-   • Модуль db.py отвечает за установление подключения к базе данных с помощью функции get_db_connection, позволяющей хранить и извлекать данные, необходимые для работы.
-
-6. Модульные обработчики для различных задач  
-
-   • В папке handlers расположены:
-
-     • admin_handlers.py — обработчики для административных функций.
-
-     • user_handlers.py — обработчики для обычных пользователей.
-
-     • language_handlers.py — обработчики, отвечающие за изменения языка интерфейса.
-
-   • Такая структура позволяет разделить функционал в зависимости от ролей пользователей и требований к интернационализации.
-
-7. Утилиты и настройки  
-
-   • Файл utils.py содержит вспомогательные функции, применяемые во многих частях проекта.
-
-   • Конфигурация проекта находится в config.py, что упрощает настройку бота под различные окружения.
-
-8. Разворачивание и настройка проекта  
-
-   • Проект контейнеризирован с помощью Dockerfile и использует docker-compose.yml для оркестрации сервисов.
-
-   • Скрипты importallsql.sh и importallsql.bat автоматизируют импорт необходимых SQL-скриптов для базы данных.
-
-9. Поддержка и инспекция кода  
-
-   • Скрипт generate_tree.py помогает визуализировать структуру проекта и извлекает список функций для анализа.
-
-   • Файл .gitignore гарантирует, что временные файлы, кэш и прочие ненужные артефакты не будут попадать под контроль версий.
+```
+project-root/
+├── .gitignore
+├── Dockerfile
+├── README.MD
+├── bot/
+│   ├── _handlers.py
+│   ├── auth.py
+│   ├── config.py
+│   ├── data.py
+│   ├── db.py
+│   ├── handlers/
+│   │   ├── admin_handlers.py
+│   │   ├── bot_core.py
+│   │   ├── common_handlers.py
+│   │   ├── language_handlers.py
+│   │   └── user_handlers.py
+│   ├── id_fields_db.py
+│   ├── language_texts.py
+│   ├── main.py
+│   ├── search.py
+│   ├── table_utils.py
+│   ├── user_stats.json
+│   └── utils.py
+├── docker/
+│   ├── bot/
+│   │   └── Dockerfile
+│   ├── mysql/
+│   │   ├── Dockerfile
+│   │   └── conf.d/
+│   │       └── 99-custom.cnf
+│   └── sphinx/
+│       ├── Dockerfile
+│       ├── example_sphinx.conf
+│       └── sphinx-entrypoint.sh
+├── docker-compose.yml
+├── requirements.txt
+└── some_things/
+    ├── README.MD
+    ├── generate_tree.py
+    ├── import_all_sql.bat
+    ├── import_all_sql.sh
+    └── split_sql.sh
+```
 
 
+### Как это работает
 
-   
-5. Расширение функционала  
+1. Контейнер MariaDB: Хранит основную базу данных.
 
-   • Разработчики могут добавлять новые обработчики и функции, следуя структуре проекта. Благодаря модульной архитектуре, новые возможности легко интегрируются в существующую систему.
+2. Контейнер Sphinx Search: Индексирует таблицы MariaDB для мгновенного полнотекстового поиска.
 
+3. Контейнер Телеграм-бота: Получает запросы от пользователей через Telegram, ищет данные с помощью Sphinx и отправляет результаты.
+
+4. Вспомогательные скрипты: Помогают с импортом, разделением и управлением большими дампами SQL.
+
+### Быстрый старт
+
+1. Клонируйте репозиторий.
+
+2. Настройте переменные окружения и параметры в bot/config.py и папке docker/.
+
+3. Соберите и запустите все контейнеры:
+    ```
+    docker-compose up --build
+    ```
+
+4. Используйте утилиты из папки some_things/ по мере необходимости.
+
+• Adjust settings in config.py according to your environment.
+
+   • Update allowed_users.json with the list of authorized Telegram user IDs.
+
+**Attention** Please select a search method in user_handlers.py (lines 163-167): if your base is not big use dbasync_perform_phone_search - it is simple, just erase "#" and comment this line(167) **results = await sphinx_search_phone_full(pool, query_text)**
+My DB is about 100_000_000 lines and it takes **15 minutes** to find something
+For fast search use sphinx_search_phone_full (search takes 10 seconds)
+for use Sphinx your need to rename example_sphinx.conf to sphinx.conf and  edit it.
+
+After editing you need to index all tables (**before this please edit sphinx.conf**)
+```
+docker exec sphinx indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
+```
+
+### Требования
+
+• Docker и Docker Compose  
+
+• Токен Telegram Bot API (указать в конфиге)
+
+• Python 3.8+
 
 
 ## TODO:
@@ -246,6 +256,6 @@ MyBot — это Telegram-бот, предназначенный для зада
 - ~~Закончить рефакторинг кода;~~
 - ~~Добавить авторизацию;~~
 - ~~Добавить администратора и возможность администратору добавлять пользователей;~~
-- Отправка уведомлений админу в случае перезапуска сервера;
+- ~~Отправка уведомлений админу в случае перезапуска сервера;~~
 - ~~Возможность админу следить за состоянием сервера (нагрузка, температура и т.д.)~~
 - ~~Сделать файл results.html временным и сразу после отправки удалять~~

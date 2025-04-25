@@ -2,6 +2,7 @@
 
 texts = {
     'ru': {
+        'main': "Главная",
         'choose_language_start': "Пожалуйста, выберите язык, выполнив /start",
         'admin_welcome': "Добро пожаловать, администратор!\nВыберите действие:",
         'user_welcome': "Добро пожаловать!\nВыберите действие:",
@@ -55,6 +56,7 @@ texts = {
         ),
     },
     'en': {
+        'main': "Main",
         'choose_language_start': "Please choose a language by executing /start",
         'admin_welcome': "Welcome, Administrator!\nSelect an action:",
         'user_welcome': "Welcome!\nSelect an action:",

@@ -4,8 +4,7 @@ split_sql.sh
 
 Скрипт с комментариями:
 
----
-
+```
 #!/bin/bash
 # Скрипт для разделения SQL дампа на N частей
 # Использование:
@@ -44,9 +43,7 @@ split -l "$LINES_PER_PART" -d --additional-suffix=.sql "$DUMP_FILE" "$OUTPUT_PRE
 
 echo "Разбивка завершена. Получены файлы:"
 ls ${OUTPUT_PREFIX}*".sql"
-
-
----
+```
 
 ▎Как использовать скрипт
 
