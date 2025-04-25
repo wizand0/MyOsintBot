@@ -7,51 +7,19 @@ from aiomysql import Pool
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 
+from . import bot_core
 from .admin_handlers import show_pending_requests, show_users_count, db_statistics, server_statistics
-from .common_handlers import build_menu_keyboard
 from ..auth import is_authorized, is_admin
 from ..config import logger, USER_STATS
 from ..data import pending_requests, save_user_stats
 from ..language_texts import texts
 from ..search import perform_phone_search, perform_general_search, dbasync_perform_general_search, \
-    dbasync_perform_phone_search, sphinx_search_phone, search_phone_full, sphinx_search_phone_full
+    dbasync_perform_phone_search, sphinx_search_phone, sphinx_search_phone_full
 from ..table_utils import send_results_message, save_results_as_html
 from ..utils import notify_admin
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # Если язык ещё не выбран, показываем клавиатуру для выбора языка.
-    if 'language' not in context.user_data:
-        keyboard = [
-            [
-                InlineKeyboardButton("Русский", callback_data='ru'),
-                InlineKeyboardButton("English", callback_data='en')
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.effective_message.reply_text(texts['ru']['select_language'], reply_markup=reply_markup)
-        return
 
-    user_lang = context.user_data['language']
-    user_id = update.effective_user.id
-
-    # Если пользователь не авторизован, обрабатываем заявку
-    if not (is_admin(user_id) or is_authorized(user_id)):
-        if user_id not in pending_requests:
-            pending_requests.add(user_id)
-            await notify_admin(context, user_id)
-        await update.effective_message.reply_text(texts[user_lang]['request_received'])
-        return
-
-    # Получаем клавиатуру для выбранного языка и типа пользователя
-    reply_markup = build_menu_keyboard(user_lang, user_id)
-    # Определяем приветственное сообщение
-    if is_admin(user_id):
-        welcome_text = texts[user_lang]['admin_welcome']
-    else:
-        welcome_text = texts[user_lang]['user_welcome']
-
-    await update.effective_message.reply_text(welcome_text, reply_markup=reply_markup)
 
 
 # Основной обработчик текстовых сообщений (для работы с меню)

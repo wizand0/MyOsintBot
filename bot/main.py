@@ -8,11 +8,11 @@ from telegram.ext import (
 )
 
 from bot.db import init_db_pool, close_db_pool
+from bot.handlers.bot_core import start
 from .handlers.common_handlers import callback_handler
 from .handlers.admin_handlers import approve_user, delete_user, stats_handler
 from .handlers.language_handlers import language_selection_handler, change_language_handler
 from .handlers.user_handlers import message_handler
-from .handlers.user_handlers import start
 from .config import TOKEN
 from .utils import notify_startup, notify_startup_try_if_no_internet
 
