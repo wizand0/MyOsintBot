@@ -2,6 +2,8 @@
 
 ENV_FILE=".env"  # <-- укажите путь к вашему .env
 
+# PLEASE READ README.MD FOR USING THIS SCRIPT!
+
 # Получаем локальный IP (например, первый из hostname -I)
 LOCAL_IP=$(hostname -I | awk '{print $1}')
 

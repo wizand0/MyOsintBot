@@ -128,6 +128,49 @@ After editing you need to index all tables (**before this please edit sphinx.con
 docker exec sphinx indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
 ```
 
+**ATTENTION 2** Admin has a button "server_stats" that shows bot's lan_ip. To show correct ip you ought to make a service at your host to update this ip twice a day: <br>
+
+1. Make chmod
+```
+chmod +x update_env_ip.sh
+```
+2. Create systemd service
+```
+/etc/systemd/system/update-env-ip.service
+```
+```
+[Unit]
+Description=Update YOUR_HOST_IP in .env
+
+[Service]
+Type=oneshot
+ExecStart=/path/to/update_env_ip.sh
+```
+
+3. Create systemd timer
+```
+etc/systemd/system/update-env-ip.timer
+```
+```
+[Unit]
+Description=Run update-env-ip.service twice a day
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+4. Activate this timer
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now update-env-ip.timer
+```
+
+
+
 ### Requirements
 
 • Docker  Docker Compose
@@ -241,6 +284,48 @@ After editing you need to index all tables (**before this please edit sphinx.con
 ```
 docker exec sphinx indexer --all --rotate --config /etc/sphinxsearch/sphinx.conf
 ```
+
+**ATTENTION 2** Admin has a button "server_stats" that shows bot's lan_ip. To show correct ip you ought to make a service at your host to update this ip twice a day: <br>
+
+1. Make chmod
+```
+chmod +x update_env_ip.sh
+```
+2. Create systemd service
+```
+/etc/systemd/system/update-env-ip.service
+```
+```
+[Unit]
+Description=Update YOUR_HOST_IP in .env
+
+[Service]
+Type=oneshot
+ExecStart=/path/to/update_env_ip.sh
+```
+
+3. Create systemd timer
+```
+etc/systemd/system/update-env-ip.timer
+```
+```
+[Unit]
+Description=Run update-env-ip.service twice a day
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+```
+
+4. Activate this timer
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now update-env-ip.timer
+```
+
 
 ### Требования
 
