@@ -42,7 +42,6 @@ async def on_shutdown(app):
         await close_db_pool(pool)
 
 
-
 def main():
     application = (ApplicationBuilder()
                    .token(TOKEN)
@@ -56,8 +55,14 @@ def main():
     application.add_handler(CommandHandler("approve", approve_user))
     # Обработчик для одобрения заявки через команду /delete 123456789 (только для админа)
     application.add_handler(CommandHandler("delete", delete_user))
-    # Обработка всех текстовых сообщений
+
+    # ДОБАВЬТЕ ОБРАБОТЧИКИ MOTION ПЕРЕД ОБЩИМ ОБРАБОТЧИКОМ ТЕКСТА
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
+
+    # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+
     # Регистрируем обработчик на CallbackQuery для выбора языка
     # Регистрируем обработчик для выбора языка ('ru' или 'en')
     application.add_handler(CallbackQueryHandler(language_selection_handler, pattern="^(ru|en)$"))
@@ -65,10 +70,6 @@ def main():
     application.add_handler(CallbackQueryHandler(change_language_handler, pattern="^change_language$"))
     # Регистрируем обработчики команд и callback query
     application.add_handler(CallbackQueryHandler(callback_handler))
-
-    # После создания application добавьте:
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
 
     application.add_handler(stats_cmd)
 
