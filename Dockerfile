@@ -12,7 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
-    libgl1-mesa-glx \
+    libglx0 \
+    libegl1 \
+    libgles2 \
+    libglvnd0 \
+    libopengl0 \
  && rm -rf /var/lib/apt/lists/*
 
 # Копируем файл requirements.txt и устанавливаем зависимости
