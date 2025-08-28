@@ -27,6 +27,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     user_id = update.effective_user.id
 
     pool: Pool = context.bot_data["db_pool"]
+    original_text = update.effective_message.text.strip()
+
+    # Skip processing for Motion ON and Motion OFF to allow specific handlers to take over
+    if original_text in ["▶️ Motion ON", "⏹ Motion OFF"]:
+        return  # Let the specific motion handlers process these messages
+
+    # Continue with lowercase text for other menu comparisons
+    text = original_text.lower()
 
     # Если язык не выбран, просим пользователя выбрать его через /start
     if 'language' not in context.user_data:
