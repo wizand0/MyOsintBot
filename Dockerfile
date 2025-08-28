@@ -1,8 +1,8 @@
 # Dockerfile
-# Используем официальный Python-образ (например, версия 3.10)
-FROM python:3.10-slim
+# Используем официальный Python-образ с конкретной версией
+FROM python:3.13-slim
 
-# Обновляем пакеты и устанавливаем дополнительные зависимости, если они нужны
+# Обновляем пакеты и устанавливаем дополнительные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     mariadb-client \
@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libsm6 \
     libxext6 \
     libxrender1 \
-    libgl1-mesa-glx \
+    libglx0 \
+    libegl1 \
+    libgles2 \
+    libglvnd0 \
+    libopengl0 \
  && rm -rf /var/lib/apt/lists/*
-
-# символическая ссылку (symlink) внутри контейнера, чтобы `/sys/class/hwmon` указывал на смонтированную `/host_sys/class/hwmon`
 
 # Копируем файл requirements.txt и устанавливаем зависимости
 COPY requirements.txt /app/requirements.txt
@@ -27,14 +29,5 @@ COPY bot /app/bot
 
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
-
-
-# Если переменные окружения для бота хранятся в .env, их можно добавить при запуске контейнера через docker-compose
-# Либо можно загрузить их внутри контейнера с помощью библиотеки python-dotenv (если она указана в requirements)
-
-# Запускаем бота
-
-# !!!!!!!!!!! Раскомментировать в Linux
-# ENTRYPOINT ["/app/entrypoint.sh"]
 
 CMD ["python", "-m", "bot.main"]
