@@ -5,49 +5,55 @@ from telegram.ext import ContextTypes
 from bot.config import ADMIN_ID
 from bot.rtsp_motion_detector import run_rtsp_detector
 
-# Глобальные флаги
-MOTION_ENABLED = False
-MOTION_TASK = None
-
-def motion_enabled() -> bool:
-    """Возвращает текущее состояние (вкл/выкл)"""
-    return MOTION_ENABLED
 
 async def motion_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Включает анализ движения"""
-    global MOTION_ENABLED, MOTION_TASK
-
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
+        await update.message.reply_text("❌ Нет прав для этой команды")
         return
 
-    if MOTION_ENABLED:
+    # Используем bot_data для хранения состояния
+    if context.bot_data.get('motion_enabled', False):
         await update.message.reply_text("📹 Детектор уже работает")
         return
 
-    MOTION_ENABLED = True
-    MOTION_TASK = context.application.create_task(run_rtsp_detector(context.bot, motion_enabled))
+    context.bot_data['motion_enabled'] = True
+
+    # Запускаем детектор в фоновой задаче
+    if 'motion_task' not in context.bot_data:
+        context.bot_data['motion_task'] = asyncio.create_task(
+            run_rtsp_detector(context.bot, lambda: context.bot_data.get('motion_enabled', False))
+        )
+
     await update.message.reply_text("✅ Детектор движения включён")
+
 
 async def motion_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Выключает анализ движения"""
-    global MOTION_ENABLED, MOTION_TASK
-
     user_id = update.effective_user.id
     if user_id != ADMIN_ID:
+        await update.message.reply_text("❌ Нет прав для этой команды")
         return
 
-    if not MOTION_ENABLED:
+    if not context.bot_data.get('motion_enabled', False):
         await update.message.reply_text("⏹ Детектор и так выключен")
         return
 
-    MOTION_ENABLED = False
-    if MOTION_TASK:
-        MOTION_TASK.cancel()
+    context.bot_data['motion_enabled'] = False
+
+    # Отменяем задачу если она существует
+    if 'motion_task' in context.bot_data:
+        context.bot_data['motion_task'].cancel()
         try:
-            await MOTION_TASK
+            await context.bot_data['motion_task']
         except asyncio.CancelledError:
             pass
-        MOTION_TASK = None
+        del context.bot_data['motion_task']
 
     await update.message.reply_text("⏹ Детектор движения выключен")
+
+
+# Функция для проверки состояния (если нужна из других модулей)
+def is_motion_enabled(context: ContextTypes.DEFAULT_TYPE) -> bool:
+    return context.bot_data.get('motion_enabled', False)
