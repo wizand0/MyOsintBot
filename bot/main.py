@@ -5,8 +5,8 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     filters, CallbackQueryHandler,
+    BaseFilter  # Добавьте для custom filter
 )
-import re  # Добавьте для flags в Regex
 
 from bot.db import init_db_pool, close_db_pool
 from bot.handlers.bot_core import start
@@ -18,6 +18,17 @@ from .config import TOKEN
 from .utils import notify_startup, notify_startup_try_if_no_internet
 from bot.handlers.common_handlers import on_motion_on_text, on_motion_off_text
 from bot.handlers.motion_handler import motion_on, motion_off
+
+
+# Custom filter для case-insensitive exact match с strip пробелов
+class ExactTextFilter(BaseFilter):
+    def __init__(self, text: str):
+        self.text = text.lower()
+
+    def check_update(self, update):
+        if update.message and update.message.text:
+            return update.message.text.strip().lower() == self.text
+        return False
 
 
 # from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
@@ -61,10 +72,8 @@ def main():
     application.add_handler(CommandHandler("delete", delete_user))
 
     # ДОБАВЬТЕ ОБРАБОТЧИКИ MOTION ПЕРЕД ОБЩИМ ОБРАБОТЧИКОМ ТЕКСТА
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(re.compile("^Motion ON$", re.IGNORECASE)),
-                                           motion_on))  # Fixed: Use re.compile with flags
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(re.compile("^Motion OFF$", re.IGNORECASE)),
-                                           motion_off))  # Fixed: Use re.compile with flags
+    application.add_handler(MessageHandler(filters.TEXT & ExactTextFilter("Motion ON"), motion_on))
+    application.add_handler(MessageHandler(filters.TEXT & ExactTextFilter("Motion OFF"), motion_off))
 
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
