@@ -12,6 +12,7 @@ from ..auth import is_authorized, is_admin
 from ..config import logger, ALLOWED_USERS
 from ..data import pending_requests, save_allowed_users
 from ..language_texts import texts
+from bot.handlers.motion_handler import motion_on, motion_off
 
 # Файл для хранения настроек пользователей
 USER_SETTINGS_FILE = 'user_settings.json'
@@ -40,9 +41,6 @@ def save_user_settings(settings: dict) -> None:
             json.dump(settings, f, ensure_ascii=False, indent=4)
     except Exception as e:
         logger.error(f"Не удалось сохранить настройки пользователя: {e}")
-
-
-
 
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -172,19 +170,24 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ловим “Новые заявки” как обычный текст
 async def on_new_requests_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    lang = context.user_data.get('language','ru')
+    lang = context.user_data.get('language', 'ru')
     if not is_admin(user_id):
         return await update.message.reply_text(texts[lang]['no_access'])
     # тут вы можете вызвать ваш show_pending_requests,
     # но, скорее всего, вам нужно вручную отрисовать Inline‑кнопки с заявками:
     await show_pending_requests_as_inline(update, context)
 
+
 # в том же common_handlers.py
 def register_common_handlers(app):
+    # уже было
     app.add_handler(MessageHandler(
         filters.TEXT & filters.Regex(f"^{texts['ru']['new_requests']}$"),
         on_new_requests_text
     ))
+
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), on_motion_on_text))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), on_motion_off_text))
 
 
 async def show_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -207,3 +210,11 @@ async def show_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=texts[lang]['choose_option'],
             reply_markup=kb
         )
+
+
+async def on_motion_on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await motion_on(update, context)
+
+
+async def on_motion_off_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await motion_off(update, context)

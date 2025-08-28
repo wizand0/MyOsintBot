@@ -54,7 +54,6 @@ def build_menu_keyboard(user_lang: str, user_id: int) -> ReplyKeyboardMarkup:
                 KeyboardButton(text=texts[user_lang]['common_search']),
                 KeyboardButton(text=texts[user_lang]['search_phone'])
             ],
-
             [
                 KeyboardButton(text=texts[user_lang]['new_requests']),
                 KeyboardButton(text=texts[user_lang]['user_count'])
@@ -62,6 +61,10 @@ def build_menu_keyboard(user_lang: str, user_id: int) -> ReplyKeyboardMarkup:
             [
                 KeyboardButton(text=texts[user_lang].get('db_stats', 'Статистика БД')),
                 KeyboardButton(text=texts[user_lang].get('server_stats', 'Характеристики сервера'))
+            ],
+            [
+                KeyboardButton(text="▶️ Motion ON"),
+                KeyboardButton(text="⏹ Motion OFF")
             ]
         ]
     # Формируем клавиатуру для авторизованного пользователя
