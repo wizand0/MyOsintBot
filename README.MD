@@ -45,6 +45,9 @@ This project is a Telegram bot designed for efficient search and retrieval of in
 
 • Extensible Handlers: Modular code structure for easy customization and extension.
 
+• RTSP motion detector (cameras in cameras.json)
+
+
 ### Project Structure
 ```
 project-root/
@@ -52,7 +55,7 @@ project-root/
 ├── Dockerfile
 ├── README.MD
 ├── bot/
-│   ├── _handlers.py
+│   ├── cameras.json
 │   ├── auth.py
 │   ├── config.py
 │   ├── data.py
