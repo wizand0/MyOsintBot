@@ -13,9 +13,10 @@ from .handlers.common_handlers import callback_handler
 from .handlers.admin_handlers import approve_user, delete_user, stats_handler
 from .handlers.language_handlers import language_selection_handler, change_language_handler
 from .handlers.user_handlers import message_handler
-from bot.handlers.motion_handler import motion_on, motion_off
 from .config import TOKEN
 from .utils import notify_startup, notify_startup_try_if_no_internet
+from bot.handlers.common_handlers import on_motion_on_text, on_motion_off_text
+from bot.handlers.motion_handler import motion_on, motion_off
 
 
 # from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
@@ -65,8 +66,9 @@ def main():
     # Регистрируем обработчики команд и callback query
     application.add_handler(CallbackQueryHandler(callback_handler))
 
-    application.add_handler(CommandHandler("motion_on", motion_on))
-    application.add_handler(CommandHandler("motion_off", motion_off))
+    # После создания application добавьте:
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
 
     application.add_handler(stats_cmd)
 
