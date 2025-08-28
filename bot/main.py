@@ -61,10 +61,10 @@ def main():
     application.add_handler(CommandHandler("delete", delete_user))
 
     # ДОБАВЬТЕ ОБРАБОТЧИКИ MOTION ПЕРЕД ОБЩИМ ОБРАБОТЧИКОМ ТЕКСТА
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^Motion ON$", flags=re.IGNORECASE),
-                                           motion_on))  # Раскомментировали и обновили
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^Motion OFF$", flags=re.IGNORECASE),
-                                           motion_off))  # Раскомментировали и обновили
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(re.compile("^Motion ON$", re.IGNORECASE)),
+                                           motion_on))  # Fixed: Use re.compile with flags
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex(re.compile("^Motion OFF$", re.IGNORECASE)),
+                                           motion_off))  # Fixed: Use re.compile with flags
 
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
