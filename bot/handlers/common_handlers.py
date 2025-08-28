@@ -179,16 +179,17 @@ async def on_new_requests_text(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # в том же common_handlers.py
+# common_handlers.py
 def register_common_handlers(app):
-    # уже было
+    # Remove these lines
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), on_motion_on_text))
+    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), on_motion_off_text))
+
+    # Keep only the necessary handler
     app.add_handler(MessageHandler(
         filters.TEXT & filters.Regex(f"^{texts['ru']['new_requests']}$"),
         on_new_requests_text
     ))
-
-    # Замените обработчики на:
-    app.add_handler(MessageHandler(filters.Text("▶️ Motion ON"), on_motion_on_text))
-    app.add_handler(MessageHandler(filters.Text("⏹ Motion OFF"), on_motion_off_text))
 
 
 async def show_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
