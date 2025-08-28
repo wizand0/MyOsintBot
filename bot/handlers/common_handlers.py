@@ -186,8 +186,9 @@ def register_common_handlers(app):
         on_new_requests_text
     ))
 
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), on_motion_on_text))
-    app.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), on_motion_off_text))
+    # Замените обработчики на:
+    app.add_handler(MessageHandler(filters.Text("▶️ Motion ON"), on_motion_on_text))
+    app.add_handler(MessageHandler(filters.Text("⏹ Motion OFF"), on_motion_off_text))
 
 
 async def show_admin_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):

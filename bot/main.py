@@ -9,7 +9,7 @@ from telegram.ext import (
 
 from bot.db import init_db_pool, close_db_pool
 from bot.handlers.bot_core import start
-from .handlers.common_handlers import callback_handler
+from .handlers.common_handlers import callback_handler, register_common_handlers
 from .handlers.admin_handlers import approve_user, delete_user, stats_handler
 from .handlers.language_handlers import language_selection_handler, change_language_handler
 from .handlers.user_handlers import message_handler
@@ -49,6 +49,9 @@ def main():
                    .post_init(on_startup)
                    .post_shutdown(on_shutdown)
                    .build())
+
+    register_common_handlers(application)
+
     # Обработчик команды /start
     application.add_handler(CommandHandler("start", start))
     # Обработчик для одобрения заявки через команду /approve 123456789 (только для админа)
@@ -57,8 +60,8 @@ def main():
     application.add_handler(CommandHandler("delete", delete_user))
 
     # ДОБАВЬТЕ ОБРАБОТЧИКИ MOTION ПЕРЕД ОБЩИМ ОБРАБОТЧИКОМ ТЕКСТА
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
-    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
+    # application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
+    # application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
 
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
