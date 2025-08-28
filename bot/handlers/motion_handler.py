@@ -3,7 +3,7 @@ import asyncio
 from telegram import Update
 from telegram.ext import ContextTypes
 from bot.config import ADMIN_ID
-from rtsp_motion_detector import run_rtsp_detector
+from bot.rtsp_motion_detector import run_rtsp_detector
 
 # Глобальные флаги
 MOTION_ENABLED = False
