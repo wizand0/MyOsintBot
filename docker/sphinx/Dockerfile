@@ -1,4 +1,4 @@
-FROM debian:buster-slim
+FROM debian:bookworm-slim
 
 ENV SPHINX_VERSION=latest
 
@@ -17,8 +17,6 @@ RUN chmod +x /usr/local/bin/sphinx-entrypoint.sh
 
 RUN mkdir -p /var/lib/sphinxsearch/data && \
     chown -R sphinxsearch:sphinxsearch /var/lib/sphinxsearch
-
-# USER sphinxsearch
 
 ENTRYPOINT ["sphinx-entrypoint.sh"]
 CMD ["searchd","--nodetach","--config","/etc/sphinxsearch/sphinx.conf"]
