@@ -243,7 +243,7 @@ async def server_statistics(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     cpu_percent = psutil.cpu_percent(interval=1)
 
     # 2) Внутренний IP
-    local_ip = os.getenv("HOST_LAN_IP", "N/A")
+    local_ip = os.getenv("YOUR_HOST_IP", "N/A")
     try:
         # способ без DNS-запроса к самому себе
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
