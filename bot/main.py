@@ -6,6 +6,7 @@ from telegram.ext import (
     MessageHandler,
     filters, CallbackQueryHandler,
 )
+import re  # Добавьте для flags в Regex
 
 from bot.db import init_db_pool, close_db_pool
 from bot.handlers.bot_core import start
@@ -60,8 +61,10 @@ def main():
     application.add_handler(CommandHandler("delete", delete_user))
 
     # ДОБАВЬТЕ ОБРАБОТЧИКИ MOTION ПЕРЕД ОБЩИМ ОБРАБОТЧИКОМ ТЕКСТА
-    # application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^▶️ Motion ON$"), motion_on))
-    # application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^⏹ Motion OFF$"), motion_off))
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^Motion ON$", flags=re.IGNORECASE),
+                                           motion_on))  # Раскомментировали и обновили
+    application.add_handler(MessageHandler(filters.TEXT & filters.Regex("^Motion OFF$", flags=re.IGNORECASE),
+                                           motion_off))  # Раскомментировали и обновили
 
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))

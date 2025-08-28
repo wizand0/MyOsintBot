@@ -2,6 +2,7 @@
 
 # Обработчик команды /start – вывод меню или запроса выбора языка
 import asyncio
+import logging
 
 from aiomysql import Pool
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -25,12 +26,14 @@ from ..utils import notify_admin
 # Основной обработчик текстовых сообщений (для работы с меню)
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.effective_user.id
-
     pool: Pool = context.bot_data["db_pool"]
     original_text = update.effective_message.text.strip()
 
+    # Для отладки: логгируем точный текст (repr показывает unicode)
+    logging.info(f"Original message text: {repr(original_text)}")
+
     # Skip processing for Motion ON and Motion OFF to allow specific handlers to take over
-    if original_text in ["▶️ Motion ON", "⏹ Motion OFF"]:
+    if original_text in ["Motion ON", "Motion OFF"]:  # Обновили без эмодзи
         return  # Let the specific motion handlers process these messages
 
     # Continue with lowercase text for other menu comparisons
@@ -44,7 +47,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Получаем выбранный язык
     lang = context.user_data['language']
-    text = update.effective_message.text.strip().lower()
+    # УДАЛИТЬ эту строку: text = update.effective_message.text.strip().lower()  # Дубликат, уже есть выше
 
     # Обработка команд администратора (сравнение можно проводить либо в нижнем регистре, либо добавить отдельные ключи)
     if is_admin(user_id):
