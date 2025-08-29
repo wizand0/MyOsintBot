@@ -31,15 +31,18 @@ logging.basicConfig(
 
 os.makedirs(FRAMES_DIR, exist_ok=True)
 
+
 # ===================== Утилиты =====================
 def now_ts():
     return time.strftime("%Y-%m-%d %H:%M:%S")
+
 
 def date_dir():
     d = time.strftime("%Y%m%d")
     p = os.path.join(FRAMES_DIR, d)
     os.makedirs(p, exist_ok=True)
     return p
+
 
 # ===================== Проверка зависимостей =====================
 def check_dependencies(bot=None):
@@ -64,6 +67,7 @@ def check_dependencies(bot=None):
     else:
         logging.info("✅ ffmpeg и OpenCV в порядке")
 
+
 # ===================== YOLO =====================
 logging.info("📦 Загружаю модель YOLOv8...")
 model = YOLO(YOLO_MODEL)
@@ -72,12 +76,18 @@ if not os.path.exists(OUTPUT_FILE):
     with open(OUTPUT_FILE, "w", newline="", encoding="utf-8") as f:
         csv.writer(f).writerow(["camera", "timestamp", "class", "confidence"])
 
+
 # ===================== Основная функция =====================
 async def run_rtsp_detector(bot, enabled_flag: callable):
     """Основная точка входа"""
     check_dependencies(bot)
 
-    with open("cameras.json", "r", encoding="utf-8") as c:
+    # with open("cameras.json", "r", encoding="utf-8") as c:
+    import pathlib
+
+    camera_file = pathlib.Path(__file__).parent / "cameras.json"
+
+    with open(camera_file, "r", encoding="utf-8") as c:
         cameras = json.load(c)
     if not cameras:
         logging.error("❌ cameras.json пустой.")
