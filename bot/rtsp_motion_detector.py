@@ -1,4 +1,3 @@
-# rtsp_motion_detector.py
 import cv2
 import csv
 import os
@@ -7,20 +6,20 @@ import json
 import logging
 import io
 import shutil
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from ultralytics import YOLO
-from bot.config import ADMIN_ID
+from bot.config import (
+    ADMIN_ID, MOTION_FRAME_SKIP, MOTION_COOLDOWN_SECONDS,
+    MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT, MOTION_SENSITIVITY,
+    MOTION_MIN_AREA, MOTION_RECOGNITION_DELAY_SEC, YOLO_CONF_THRESHOLD,
+    YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES, MOTION_PLAYBACK_SPEED
+)
 
 # ===================== НАСТРОЙКИ =====================
-SENSITIVITY = 25
-MIN_AREA = 800
-PLAYBACK_SPEED = 8
-SAVE_FRAMES = True
-RECOGNITION_DELAY_SEC = 4
 OUTPUT_FILE = "rtsp_motions_log.csv"
 FRAMES_DIR = "rtsp_motion_frames"
 YOLO_MODEL = "yolov8n.pt"
-CONF_THRESHOLD = 0.7
-TARGET_CLASSES = ["person", "cat", "dog"]
 
 # Логгер
 logging.basicConfig(
@@ -30,6 +29,9 @@ logging.basicConfig(
 )
 
 os.makedirs(FRAMES_DIR, exist_ok=True)
+
+# Пул потоков для асинхронной обработки кадров
+frame_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="motion_detector")
 
 
 # ===================== Утилиты =====================
@@ -61,7 +63,7 @@ def check_dependencies(bot=None):
         if bot:
             for e in errors:
                 try:
-                    bot.loop.create_task(bot.send_message(chat_id=ADMIN_ID, text=e))
+                    asyncio.create_task(bot.send_message(chat_id=ADMIN_ID, text=e))
                 except Exception:
                     pass
     else:
@@ -77,16 +79,63 @@ if not os.path.exists(OUTPUT_FILE):
         csv.writer(f).writerow(["camera", "timestamp", "class", "confidence"])
 
 
+# ===================== Оптимизированная детекция движения =====================
+def detect_motion_optimized(frame1, frame2):
+    """Оптимизированная детекция движения с уменьшением кадра"""
+    # Уменьшаем кадры для ускорения обработки
+    small1 = cv2.resize(frame1, (MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT))
+    small2 = cv2.resize(frame2, (MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT))
+
+    # Детекция движения
+    diff = cv2.absdiff(small1, small2)
+    gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, thresh = cv2.threshold(blur, MOTION_SENSITIVITY, 255, cv2.THRESH_BINARY)
+    dilated = cv2.dilate(thresh, None, iterations=3)
+    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Проверяем наличие движения с учетом масштаба
+    scale_factor = (frame1.shape[1] / MOTION_RESIZE_WIDTH) * (frame1.shape[0] / MOTION_RESIZE_HEIGHT)
+    adjusted_min_area = MOTION_MIN_AREA / scale_factor
+
+    return any(cv2.contourArea(c) >= adjusted_min_area for c in contours)
+
+
+async def process_yolo_async(frame):
+    """Асинхронная обработка YOLO"""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(frame_executor, lambda: model(frame, verbose=False)[0])
+
+
+class MotionDetector:
+    def __init__(self, camera_name):
+        self.camera_name = camera_name
+        self.frame_counter = 0
+        self.last_trigger_time = 0.0
+        self.last_motion_notification = 0.0
+
+    def should_process_frame(self):
+        """Проверка, нужно ли обрабатывать текущий кадр"""
+        self.frame_counter += 1
+        return self.frame_counter % MOTION_FRAME_SKIP == 0
+
+    def can_send_notification(self):
+        """Проверка cooldown для уведомлений"""
+        current_time = time.time()
+        return (current_time - self.last_motion_notification) >= MOTION_COOLDOWN_SECONDS
+
+    def update_notification_time(self):
+        """Обновление времени последнего уведомления"""
+        self.last_motion_notification = time.time()
+
+
 # ===================== Основная функция =====================
-async def run_rtsp_detector(bot, enabled_flag: callable):
-    """Основная точка входа"""
+async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
+    """Основная точка входа с оптимизациями"""
     check_dependencies(bot)
 
-    # with open("cameras.json", "r", encoding="utf-8") as c:
     import pathlib
-
     camera_file = pathlib.Path(__file__).parent / "cameras.json"
-
     logging.info(f"camera_file: {camera_file}")
 
     with open(camera_file, "r", encoding="utf-8") as c:
@@ -96,14 +145,16 @@ async def run_rtsp_detector(bot, enabled_flag: callable):
         return
 
     logging.info(f"cameras: {cameras}")
-
-    logging.info(f"🔍 Найдено {len(cameras)} камер. Запуск анализа...")
+    logging.info(f"🔍 Найдено {len(cameras)} камер. Запуск анализа с оптимизациями...")
+    logging.info(f"⚡ Настройки: анализ каждого {MOTION_FRAME_SKIP}-го кадра, "
+                 f"cooldown {MOTION_COOLDOWN_SECONDS}s, размер {MOTION_RESIZE_WIDTH}x{MOTION_RESIZE_HEIGHT}")
 
     for name, url in cameras.items():
-        await detect_motion_and_objects(bot, name, url, enabled_flag)
+        await detect_motion_and_objects_optimized(bot, name, url, enabled_flag, send_alert_func)
 
 
-async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
+async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
+    """Оптимизированная детекция движения и объектов"""
     logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
     if not cap.isOpened():
@@ -119,8 +170,8 @@ async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
         cap.release()
         return
 
-    last_trigger_time = 0.0
-    frame_count = 0
+    # Создаем детектор для данной камеры
+    detector = MotionDetector(camera_name)
 
     try:
         while True:
@@ -130,68 +181,73 @@ async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
                 await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
                 break
 
-            if frame_count % PLAYBACK_SPEED != 0:
-                frame1 = frame2
-                if not cap.grab():
-                    logging.warning(f"⚠️ grab() вернул False для {camera_name}")
-                    break
-                ok, frame2 = cap.retrieve()
-                if not ok:
-                    logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
-                    break
-                frame_count += 1
-                continue
-
-            # Анализ движения
-            small1 = cv2.resize(frame1, (640, 360))
-            small2 = cv2.resize(frame2, (640, 360))
-            diff = cv2.absdiff(small1, small2)
-            gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-            blur = cv2.GaussianBlur(gray, (5, 5), 0)
-            _, thresh = cv2.threshold(blur, SENSITIVITY, 255, cv2.THRESH_BINARY)
-            dilated = cv2.dilate(thresh, None, iterations=3)
-            contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            motion_detected = any(cv2.contourArea(c) >= MIN_AREA for c in contours)
-
-            if motion_detected:
-                logging.info(f"🚨 Движение зафиксировано на {camera_name}")
-                results = model(frame2, verbose=False)[0]
-                for box in results.boxes:
-                    cls_id = int(box.cls[0])
-                    class_name = results.names[cls_id]
-                    conf = float(box.conf[0])
-
-                    if class_name in TARGET_CLASSES and conf >= CONF_THRESHOLD:
-                        now = time.time()
-                        if (now - last_trigger_time) >= RECOGNITION_DELAY_SEC:
-                            ts = now_ts()
-                            logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
-
-                            _, buf = cv2.imencode(".jpg", frame2)
-                            image_bytes = io.BytesIO(buf)
-                            await bot.send_photo(
-                                chat_id=ADMIN_ID,
-                                photo=image_bytes,
-                                caption=f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
-                            )
-
-                            if SAVE_FRAMES:
-                                fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
-                                cv2.imwrite(os.path.join(date_dir(), fname), frame2)
-
-                            with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as f:
-                                csv.writer(f).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
-
-                            last_trigger_time = now
-                        break
-
-            frame1 = frame2
+            # Читаем следующий кадр
             if not cap.grab():
+                logging.warning(f"⚠️ grab() вернул False для {camera_name}")
                 break
             ok, frame2 = cap.retrieve()
             if not ok:
+                logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
                 break
-            frame_count += 1
+
+            # Пропускаем кадры для снижения нагрузки
+            if not detector.should_process_frame():
+                frame1 = frame2
+                continue
+
+            # Оптимизированная детекция движения
+            motion_detected = detect_motion_optimized(frame1, frame2)
+
+            if motion_detected and detector.can_send_notification():
+                logging.info(f"🚨 Движение зафиксировано на {camera_name}")
+
+                # Асинхронная обработка YOLO
+                try:
+                    results = await process_yolo_async(frame2)
+                    object_detected = False
+
+                    for box in results.boxes:
+                        cls_id = int(box.cls[0])
+                        class_name = results.names[cls_id]
+                        conf = float(box.conf[0])
+
+                        if class_name in YOLO_TARGET_CLASSES and conf >= YOLO_CONF_THRESHOLD:
+                            current_time = time.time()
+                            if (current_time - detector.last_trigger_time) >= MOTION_RECOGNITION_DELAY_SEC:
+                                ts = now_ts()
+                                logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
+
+                                _, buf = cv2.imencode(".jpg", frame2)
+                                image_bytes = io.BytesIO(buf)
+
+                                caption = f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
+
+                                # Используем функцию с cooldown если передана, иначе обычную отправку
+                                if send_alert_func:
+                                    await send_alert_func(bot, ADMIN_ID, image_bytes, caption)
+                                else:
+                                    await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
+
+                                if MOTION_SAVE_FRAMES:
+                                    fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
+                                    cv2.imwrite(os.path.join(date_dir(), fname), frame2)
+
+                                with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as f:
+                                    csv.writer(f).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
+
+                                detector.last_trigger_time = current_time
+                                detector.update_notification_time()
+                                object_detected = True
+                                break
+
+                    # Если не нашли объекты, но движение есть - просто обновляем время cooldown
+                    if not object_detected:
+                        detector.update_notification_time()
+
+                except Exception as e:
+                    logging.error(f"Ошибка YOLO обработки: {e}")
+
+            frame1 = frame2
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке {camera_name}: {e}")

@@ -1,4 +1,3 @@
-# config.py
 import os
 import logging
 from dotenv import load_dotenv
@@ -37,8 +36,27 @@ if not ALLOWED_USERS:
         ALLOWED_USERS.append(ADMIN_ID)
     save_allowed_users(ALLOWED_USERS)
 
-
 USER_STATS = load_user_stats()
 
 # опционально — сразу сохраните, если файл не существовал
 save_user_stats(USER_STATS)
+
+# ===================== НАСТРОЙКИ ДЕТЕКЦИИ ДВИЖЕНИЯ =====================
+# Производительность
+MOTION_FRAME_SKIP = int(os.getenv('MOTION_FRAME_SKIP', '8'))  # Анализировать каждый N-й кадр
+MOTION_COOLDOWN_SECONDS = int(os.getenv('MOTION_COOLDOWN_SECONDS', '10'))  # Cooldown между уведомлениями
+MOTION_RESIZE_WIDTH = int(os.getenv('MOTION_RESIZE_WIDTH', '640'))  # Ширина для уменьшения кадра
+MOTION_RESIZE_HEIGHT = int(os.getenv('MOTION_RESIZE_HEIGHT', '360'))  # Высота для уменьшения кадра
+
+# Чувствительность детекции
+MOTION_SENSITIVITY = int(os.getenv('MOTION_SENSITIVITY', '25'))  # Порог чувствительности
+MOTION_MIN_AREA = int(os.getenv('MOTION_MIN_AREA', '2000'))  # Увеличили минимальную площадь
+MOTION_RECOGNITION_DELAY_SEC = int(os.getenv('MOTION_RECOGNITION_DELAY_SEC', '4'))  # Задержка для YOLO
+
+# YOLO настройки
+YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.7'))  # Порог уверенности
+YOLO_TARGET_CLASSES = os.getenv('YOLO_TARGET_CLASSES', 'person,cat,dog').split(',')  # Целевые классы
+
+# Прочие настройки
+MOTION_SAVE_FRAMES = os.getenv('MOTION_SAVE_FRAMES', 'True').lower() == 'true'
+MOTION_PLAYBACK_SPEED = int(os.getenv('MOTION_PLAYBACK_SPEED', '8'))  # Скорость воспроизведения
