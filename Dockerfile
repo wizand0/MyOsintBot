@@ -4,6 +4,7 @@ FROM python:3.13-slim
 
 # Обновляем пакеты и устанавливаем дополнительные зависимости
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
     gcc \
     mariadb-client \
     lm-sensors \
