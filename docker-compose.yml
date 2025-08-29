@@ -74,6 +74,7 @@ services:
       - "9312:9312"
       - "9306:9306"
     volumes:
+      # пробелы
       - ./docker/sphinx/sphinx.conf:/etc/sphinxsearch/sphinx.conf:ro
       - sphinx-data:/var/lib/sphinxsearch
       - sphinx-logs:/var/log/sphinxsearch
