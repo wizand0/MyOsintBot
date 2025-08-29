@@ -18,11 +18,25 @@ services:
       - SPHINX_HOST=sphinx
       - SPHINX_PORT=9306
     volumes:
+      # Логи и данные детектора движений
+      - ./bot/motion_debug.log:/app/bot/motion_debug.log
+      - ./bot/rtsp_motion_frames:/app/bot/rtsp_motion_frames
+      - ./bot/rtsp_motions_log.csv:/app/bot/rtsp_motions_log.csv
+      # Конфиги камер и пользователей — на хосте
+      - ./bot/cameras.json:/app/bot/cameras.json:ro
+      - ./bot/allowed_users.json:/app/bot/allowed_users.json
+      - ./bot/user_stats.json:/app/bot/user_stats.json
+
       - /proc/loadavg:/host_loadavg:ro
       - /proc/uptime:/host_uptime:ro
       # - /sys/class/hwmon:/host_sys/class/hwmon:ro   # для Linux
     networks:
       - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   db:
     build:
@@ -61,7 +75,7 @@ services:
       - "9306:9306"
     volumes:
       # ваш конфиг
-      - ./docker/sphinx/sphinx.conf:/etc/sphinxsearch/sphinx.conf:ro
+      - ./docker/sphinx/sphinx.conf :/etc/sphinxsearch/sphinx.conf:ro
       - sphinx-data:/var/lib/sphinxsearch
       - sphinx-logs:/var/log/sphinxsearch
       - sphinx-run:/var/run/sphinxsearch

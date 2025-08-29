@@ -6,6 +6,7 @@ import time
 import json
 import logging
 import io
+import shutil
 from ultralytics import YOLO
 from bot.config import ADMIN_ID
 
@@ -25,10 +26,7 @@ TARGET_CLASSES = ["person", "cat", "dog"]
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
-    handlers=[
-        logging.FileHandler("motion_debug.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()]
 )
 
 os.makedirs(FRAMES_DIR, exist_ok=True)
@@ -43,6 +41,29 @@ def date_dir():
     os.makedirs(p, exist_ok=True)
     return p
 
+# ===================== Проверка зависимостей =====================
+def check_dependencies(bot=None):
+    """Проверяем наличие ffmpeg и поддержку в OpenCV"""
+    errors = []
+    if shutil.which("ffmpeg") is None:
+        errors.append("❌ ffmpeg не найден в контейнере")
+
+    build_info = cv2.getBuildInformation()
+    if "FFMPEG" not in build_info:
+        errors.append("❌ OpenCV собран без поддержки ffmpeg")
+
+    if errors:
+        for e in errors:
+            logging.error(e)
+        if bot:
+            for e in errors:
+                try:
+                    bot.loop.create_task(bot.send_message(chat_id=ADMIN_ID, text=e))
+                except Exception:
+                    pass
+    else:
+        logging.info("✅ ffmpeg и OpenCV в порядке")
+
 # ===================== YOLO =====================
 logging.info("📦 Загружаю модель YOLOv8...")
 model = YOLO(YOLO_MODEL)
@@ -53,10 +74,8 @@ if not os.path.exists(OUTPUT_FILE):
 
 # ===================== Основная функция =====================
 async def run_rtsp_detector(bot, enabled_flag: callable):
-    """
-    bot          - экземпляр telegram.Bot
-    enabled_flag - функция/лямбда, которая возвращает True/False (вкл/выкл анализ)
-    """
+    """Основная точка входа"""
+    check_dependencies(bot)
 
     with open("cameras.json", "r", encoding="utf-8") as c:
         cameras = json.load(c)
@@ -64,44 +83,52 @@ async def run_rtsp_detector(bot, enabled_flag: callable):
         logging.error("❌ cameras.json пустой.")
         return
 
-    logging.info(f"🔍 Камер: {len(cameras)}. Запуск анализа...")
+    logging.info(f"🔍 Найдено {len(cameras)} камер. Запуск анализа...")
 
     for name, url in cameras.items():
-        # каждая камера в отдельном потоке async не делаем — пойдём по очереди
         await detect_motion_and_objects(bot, name, url, enabled_flag)
 
 
 async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
+    logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
+    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+    if not cap.isOpened():
+        logging.error(f"❌ Не удалось подключиться к {camera_name}")
+        return
+
+    logging.info(f"✅ Соединение с {camera_name} установлено")
+
+    ret, frame1 = cap.read()
+    ret2, frame2 = cap.read()
+    if not ret or not ret2:
+        logging.error(f"❌ Не удалось прочитать начальные кадры {camera_name}")
+        cap.release()
+        return
+
+    last_trigger_time = 0.0
+    frame_count = 0
+
     try:
-        cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
-        if not cap.isOpened():
-            logging.error(f"❌ Не удалось подключиться к {camera_name}")
-            return
-
-        ret, frame1 = cap.read()
-        ret2, frame2 = cap.read()
-        if not ret or not ret2:
-            cap.release()
-            return
-
-        last_trigger_time = 0.0
-        frame_count = 0
-
         while True:
             if not enabled_flag():
-                await bot.send_message(chat_id=ADMIN_ID, text="⏹ Детектор остановлен")
+                logging.info(f"⏹ Останавливаю {camera_name}, освобождаю поток")
+                cap.release()
+                await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
                 break
 
             if frame_count % PLAYBACK_SPEED != 0:
                 frame1 = frame2
                 if not cap.grab():
+                    logging.warning(f"⚠️ grab() вернул False для {camera_name}")
                     break
                 ok, frame2 = cap.retrieve()
                 if not ok:
+                    logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
                     break
                 frame_count += 1
                 continue
 
+            # Анализ движения
             small1 = cv2.resize(frame1, (640, 360))
             small2 = cv2.resize(frame2, (640, 360))
             diff = cv2.absdiff(small1, small2)
@@ -113,6 +140,7 @@ async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
             motion_detected = any(cv2.contourArea(c) >= MIN_AREA for c in contours)
 
             if motion_detected:
+                logging.info(f"🚨 Движение зафиксировано на {camera_name}")
                 results = model(frame2, verbose=False)[0]
                 for box in results.boxes:
                     cls_id = int(box.cls[0])
@@ -125,7 +153,6 @@ async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
                             ts = now_ts()
                             logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
 
-                            # Отправляем кадр админу
                             _, buf = cv2.imencode(".jpg", frame2)
                             image_bytes = io.BytesIO(buf)
                             await bot.send_photo(
@@ -152,7 +179,8 @@ async def detect_motion_and_objects(bot, camera_name, rtsp_url, enabled_flag):
                 break
             frame_count += 1
 
-        cap.release()
-
     except Exception as e:
         logging.exception(f"Ошибка при обработке {camera_name}: {e}")
+    finally:
+        cap.release()
+        logging.info(f"🔚 Поток {camera_name} завершён")
