@@ -63,8 +63,11 @@ def build_menu_keyboard(user_lang: str, user_id: int) -> ReplyKeyboardMarkup:
                 KeyboardButton(text=texts[user_lang].get('server_stats', 'Характеристики сервера'))
             ],
             [
-                KeyboardButton(text="Motion ON"),  # Убрали ▶️
-                KeyboardButton(text="Motion OFF")  # Убрали ⏹
+                KeyboardButton(text="Motion ON"),
+                KeyboardButton(text="Motion OFF")
+            ],
+            [
+                KeyboardButton(text="📊 Motion Status")  # Новая кнопка для статуса
             ]
         ]
     # Формируем клавиатуру для авторизованного пользователя
