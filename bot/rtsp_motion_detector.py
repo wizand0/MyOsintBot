@@ -87,11 +87,15 @@ async def run_rtsp_detector(bot, enabled_flag: callable):
 
     camera_file = pathlib.Path(__file__).parent / "cameras.json"
 
+    logging.info(f"camera_file: {camera_file}")
+
     with open(camera_file, "r", encoding="utf-8") as c:
         cameras = json.load(c)
     if not cameras:
         logging.error("❌ cameras.json пустой.")
         return
+
+    logging.info(f"cameras: {cameras}")
 
     logging.info(f"🔍 Найдено {len(cameras)} камер. Запуск анализа...")
 
