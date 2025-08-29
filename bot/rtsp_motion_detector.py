@@ -33,6 +33,9 @@ os.makedirs(FRAMES_DIR, exist_ok=True)
 # Пул потоков для асинхронной обработки кадров
 frame_executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="motion_detector")
 
+# Глобальный список активных задач камер
+active_camera_tasks = []
+
 
 # ===================== Утилиты =====================
 def now_ts():
@@ -131,7 +134,7 @@ class MotionDetector:
 
 # ===================== Основная функция =====================
 async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
-    """Основная точка входа с оптимизациями"""
+    """Основная точка входа с оптимизациями - запускает все камеры параллельно"""
     check_dependencies(bot)
 
     import pathlib
@@ -149,14 +152,38 @@ async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
     logging.info(f"⚡ Настройки: анализ каждого {MOTION_FRAME_SKIP}-го кадра, "
                  f"cooldown {MOTION_COOLDOWN_SECONDS}s, размер {MOTION_RESIZE_WIDTH}x{MOTION_RESIZE_HEIGHT}")
 
-    for name, url in cameras.items():
-        await detect_motion_and_objects_optimized(bot, name, url, enabled_flag, send_alert_func)
+    # Создаем задачи для всех камер параллельно
+    global active_camera_tasks
+    active_camera_tasks = []
+
+    try:
+        for name, url in cameras.items():
+            task = asyncio.create_task(
+                detect_motion_and_objects_optimized(bot, name, url, enabled_flag, send_alert_func),
+                name=f"camera_{name}"
+            )
+            active_camera_tasks.append(task)
+            logging.info(f"🚀 Запускаю задачу для камеры {name}")
+
+        # Ждем завершения всех задач (или их отмены)
+        await asyncio.gather(*active_camera_tasks, return_exceptions=True)
+
+    except Exception as e:
+        logging.error(f"Ошибка в run_rtsp_detector: {e}")
+    finally:
+        # Отменяем все активные задачи при завершении
+        for task in active_camera_tasks:
+            if not task.done():
+                task.cancel()
+        active_camera_tasks.clear()
+        logging.info("🔚 Все камеры остановлены")
 
 
 async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
     """Оптимизированная детекция движения и объектов"""
     logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+
     if not cap.isOpened():
         logging.error(f"❌ Не удалось подключиться к {camera_name}")
         return
@@ -175,10 +202,9 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
 
     try:
         while True:
+            # Проверяем состояние флага
             if not enabled_flag():
                 logging.info(f"⏹ Останавливаю {camera_name}, освобождаю поток")
-                cap.release()
-                await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
                 break
 
             # Читаем следующий кадр
@@ -245,12 +271,23 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                         detector.update_notification_time()
 
                 except Exception as e:
-                    logging.error(f"Ошибка YOLO обработки: {e}")
+                    logging.error(f"Ошибка YOLO обработки для {camera_name}: {e}")
 
             frame1 = frame2
 
+            # Небольшая пауза чтобы не нагружать CPU слишком сильно
+            await asyncio.sleep(0.001)
+
+    except asyncio.CancelledError:
+        logging.info(f"🛑 Задача камеры {camera_name} отменена")
+        raise
     except Exception as e:
         logging.exception(f"Ошибка при обработке {camera_name}: {e}")
     finally:
         cap.release()
         logging.info(f"🔚 Поток {camera_name} завершён")
+        # Уведомляем о завершении
+        try:
+            await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
+        except Exception:
+            pass

@@ -2,7 +2,7 @@ import asyncio
 import time
 from telegram import Update
 from telegram.ext import ContextTypes
-from bot.config import ADMIN_ID, MOTION_COOLDOWN_SECONDS
+from bot.config import ADMIN_ID, MOTION_COOLDOWN_SECONDS, MOTION_FRAME_SKIP, MOTION_MIN_AREA
 from bot.rtsp_motion_detector import run_rtsp_detector
 import logging
 
@@ -10,7 +10,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(
 
 # Глобальный словарь для отслеживания cooldown уведомлений
 motion_notification_cooldown = {}
-
 
 async def send_motion_alert_with_cooldown(bot, chat_id, photo_data, caption):
     """Отправка уведомления о движении с учетом cooldown"""
@@ -30,7 +29,6 @@ async def send_motion_alert_with_cooldown(bot, chat_id, photo_data, caption):
     except Exception as e:
         logging.error(f"Ошибка отправки уведомления: {e}")
         return False
-
 
 async def motion_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("motion_on handler called")
@@ -56,14 +54,14 @@ async def motion_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 send_motion_alert_with_cooldown
             )
         )
-        logging.info("Motion detector task started with optimizations")
+        logging.info("Motion detector task started with optimizations for multiple cameras")
 
     await update.message.reply_text(
         f"✅ Детектор движения включён\n"
-        f"🔧 Оптимизации: анализ каждого {context.bot_data.get('frame_skip', 8)}-го кадра\n"
-        f"⏰ Cooldown уведомлений: {MOTION_COOLDOWN_SECONDS}s"
+        f"🔧 Оптимизации: анализ каждого {MOTION_FRAME_SKIP}-го кадра\n"
+        f"⏰ Cooldown уведомлений: {MOTION_COOLDOWN_SECONDS}s\n"
+        f"📹 Камеры будут запущены параллельно"
     )
-
 
 async def motion_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("motion_off handler called")
@@ -94,7 +92,6 @@ async def motion_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("⏹ Детектор движения выключен")
 
-
 async def motion_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать статус детектора движения"""
     user_id = update.effective_user.id
@@ -105,15 +102,17 @@ async def motion_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     enabled = context.bot_data.get('motion_enabled', False)
     status = "🟢 Включён" if enabled else "🔴 Выключен"
 
-    from bot.config import MOTION_FRAME_SKIP, MOTION_COOLDOWN_SECONDS, MOTION_MIN_AREA
+    # Подсчитываем количество активных камер
+    from bot.rtsp_motion_detector import active_camera_tasks
+    active_cameras = len([task for task in active_camera_tasks if not task.done()])
 
     await update.message.reply_text(
         f"📊 Статус детектора: {status}\n"
+        f"📹 Активных камер: {active_cameras}\n"
         f"🔧 Анализ кадров: каждый {MOTION_FRAME_SKIP}-й\n"
         f"⏰ Cooldown: {MOTION_COOLDOWN_SECONDS}s\n"
         f"📏 Мин. площадь: {MOTION_MIN_AREA}px"
     )
-
 
 # Функция для проверки состояния (если нужна из других модулей)
 def is_motion_enabled(context: ContextTypes.DEFAULT_TYPE) -> bool:

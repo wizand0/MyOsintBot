@@ -17,7 +17,7 @@ from .handlers.user_handlers import message_handler
 from .config import TOKEN
 from .utils import notify_startup, notify_startup_try_if_no_internet
 from bot.handlers.common_handlers import on_motion_on_text, on_motion_off_text
-from bot.handlers.motion_handler import motion_on, motion_off
+from bot.handlers.motion_handler import motion_on, motion_off, motion_status
 
 
 # from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
@@ -67,8 +67,18 @@ def main():
     #                                        motion_off))
 
     # вместо filters.Regex(...)
+    # application.add_handler(MessageHandler(filters.TEXT & filters.Text(["Motion ON", "motion on"]), motion_on))
+    # application.add_handler(MessageHandler(filters.TEXT & filters.Text(["Motion OFF", "motion off"]), motion_off))
+
+    # MOTION HANDLERS - добавляем все motion-related обработчики
     application.add_handler(MessageHandler(filters.TEXT & filters.Text(["Motion ON", "motion on"]), motion_on))
     application.add_handler(MessageHandler(filters.TEXT & filters.Text(["Motion OFF", "motion off"]), motion_off))
+    application.add_handler(
+        MessageHandler(filters.TEXT & filters.Text(["📊 Motion Status", "motion status", "Motion Status"]),
+                       motion_status))  # Новый обработчик
+
+    # Также можно добавить команду для статуса (опционально)
+    application.add_handler(CommandHandler("motion_status", motion_status))
 
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
