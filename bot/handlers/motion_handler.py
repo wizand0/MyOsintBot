@@ -1,13 +1,36 @@
-# bot/handlers/motion_handler.py
 import asyncio
+import time
 from telegram import Update
 from telegram.ext import ContextTypes
-from bot.config import ADMIN_ID
+from bot.config import ADMIN_ID, MOTION_COOLDOWN_SECONDS
 from bot.rtsp_motion_detector import run_rtsp_detector
 import logging
 
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+
+# Глобальный словарь для отслеживания cooldown уведомлений
+motion_notification_cooldown = {}
+
+
+async def send_motion_alert_with_cooldown(bot, chat_id, photo_data, caption):
+    """Отправка уведомления о движении с учетом cooldown"""
+    current_time = time.time()
+
+    # Проверяем cooldown для данного чата
+    if (chat_id in motion_notification_cooldown and
+            current_time - motion_notification_cooldown[chat_id] < MOTION_COOLDOWN_SECONDS):
+        logging.info(f"Уведомление пропущено из-за cooldown ({MOTION_COOLDOWN_SECONDS}s)")
+        return False
+
+    try:
+        await bot.send_photo(chat_id=chat_id, photo=photo_data, caption=caption)
+        motion_notification_cooldown[chat_id] = current_time
+        logging.info(f"Уведомление отправлено с cooldown {MOTION_COOLDOWN_SECONDS}s")
+        return True
+    except Exception as e:
+        logging.error(f"Ошибка отправки уведомления: {e}")
+        return False
+
 
 async def motion_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("motion_on handler called")
@@ -25,12 +48,22 @@ async def motion_on(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.bot_data['motion_enabled'] = True
 
     if 'motion_task' not in context.bot_data:
+        # Передаем функцию send_motion_alert_with_cooldown в детектор
         context.bot_data['motion_task'] = asyncio.create_task(
-            run_rtsp_detector(context.bot, lambda: context.bot_data.get('motion_enabled', False))
+            run_rtsp_detector(
+                context.bot,
+                lambda: context.bot_data.get('motion_enabled', False),
+                send_motion_alert_with_cooldown
+            )
         )
-        logging.info("Motion detector task started")
+        logging.info("Motion detector task started with optimizations")
 
-    await update.message.reply_text("✅ Детектор движения включён")
+    await update.message.reply_text(
+        f"✅ Детектор движения включён\n"
+        f"🔧 Оптимизации: анализ каждого {context.bot_data.get('frame_skip', 8)}-го кадра\n"
+        f"⏰ Cooldown уведомлений: {MOTION_COOLDOWN_SECONDS}s"
+    )
+
 
 async def motion_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logging.info("motion_off handler called")
@@ -55,7 +88,31 @@ async def motion_off(update: Update, context: ContextTypes.DEFAULT_TYPE):
             logging.info("Motion detector task cancelled")
         del context.bot_data['motion_task']
 
+    # Очищаем cooldown при выключении
+    global motion_notification_cooldown
+    motion_notification_cooldown.clear()
+
     await update.message.reply_text("⏹ Детектор движения выключен")
+
+
+async def motion_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать статус детектора движения"""
+    user_id = update.effective_user.id
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("❌ Нет прав для этой команды")
+        return
+
+    enabled = context.bot_data.get('motion_enabled', False)
+    status = "🟢 Включён" if enabled else "🔴 Выключен"
+
+    from bot.config import MOTION_FRAME_SKIP, MOTION_COOLDOWN_SECONDS, MOTION_MIN_AREA
+
+    await update.message.reply_text(
+        f"📊 Статус детектора: {status}\n"
+        f"🔧 Анализ кадров: каждый {MOTION_FRAME_SKIP}-й\n"
+        f"⏰ Cooldown: {MOTION_COOLDOWN_SECONDS}s\n"
+        f"📏 Мин. площадь: {MOTION_MIN_AREA}px"
+    )
 
 
 # Функция для проверки состояния (если нужна из других модулей)
