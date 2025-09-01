@@ -44,7 +44,7 @@ save_user_stats(USER_STATS)
 # ===================== НАСТРОЙКИ ДЕТЕКЦИИ ДВИЖЕНИЯ =====================
 # Производительность
 MOTION_FRAME_SKIP = int(os.getenv('MOTION_FRAME_SKIP', '8'))  # Анализировать каждый N-й кадр
-MOTION_COOLDOWN_SECONDS = int(os.getenv('MOTION_COOLDOWN_SECONDS', '10'))  # Cooldown между уведомлениями
+MOTION_COOLDOWN_SECONDS = int(os.getenv('MOTION_COOLDOWN_SECONDS', '15'))  # Cooldown между уведомлениями
 MOTION_RESIZE_WIDTH = int(os.getenv('MOTION_RESIZE_WIDTH', '640'))  # Ширина для уменьшения кадра
 MOTION_RESIZE_HEIGHT = int(os.getenv('MOTION_RESIZE_HEIGHT', '360'))  # Высота для уменьшения кадра
 

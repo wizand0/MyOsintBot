@@ -16,10 +16,10 @@ async def send_motion_alert_with_cooldown(bot, chat_id, photo_data, caption):
     current_time = time.time()
 
     # Проверяем cooldown для данного чата
-    if (chat_id in motion_notification_cooldown and
-            current_time - motion_notification_cooldown[chat_id] < MOTION_COOLDOWN_SECONDS):
-        logging.info(f"Уведомление пропущено из-за cooldown ({MOTION_COOLDOWN_SECONDS}s)")
-        return False
+    # if (chat_id in motion_notification_cooldown and
+    #         current_time - motion_notification_cooldown[chat_id] < MOTION_COOLDOWN_SECONDS):
+    #     logging.info(f"Уведомление пропущено из-за cooldown ({MOTION_COOLDOWN_SECONDS}s)")
+    #     return False
 
     try:
         await bot.send_photo(chat_id=chat_id, photo=photo_data, caption=caption)
