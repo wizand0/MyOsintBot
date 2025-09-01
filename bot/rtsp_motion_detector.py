@@ -13,7 +13,7 @@ from bot.config import (
     ADMIN_ID, MOTION_FRAME_SKIP, MOTION_COOLDOWN_SECONDS,
     MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT, MOTION_SENSITIVITY,
     MOTION_MIN_AREA, MOTION_RECOGNITION_DELAY_SEC, YOLO_CONF_THRESHOLD,
-    YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES, MOTION_PLAYBACK_SPEED
+    YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES
 )
 
 # ===================== НАСТРОЙКИ =====================
@@ -216,6 +216,11 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                 logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
                 break
 
+            # Перестраховка: Убедитесь, что frame2 не пустой
+            if frame2 is None or frame2.size == 0:
+                logging.warning(f"⚠️ Получен пустой кадр для {camera_name}")
+                continue
+
             # Пропускаем кадры для снижения нагрузки
             if not detector.should_process_frame():
                 frame1 = frame2
@@ -276,7 +281,7 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
             frame1 = frame2
 
             # Небольшая пауза чтобы не нагружать CPU слишком сильно
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.05)
 
     except asyncio.CancelledError:
         logging.info(f"🛑 Задача камеры {camera_name} отменена")
