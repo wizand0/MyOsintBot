@@ -270,6 +270,11 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                                 detector.update_notification_time()
                                 object_detected = True
                                 break
+                        else:
+                            logging.info(
+                                f"YOLO не подтвердил: {class_name} ({conf:.2f}), "
+                                f"порог {YOLO_CONF_THRESHOLD}"
+                            )
 
                     # Если не нашли объекты, но движение есть - просто обновляем время cooldown
                     if not object_detected:
