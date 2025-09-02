@@ -13,7 +13,8 @@ from bot.config import (
     ADMIN_ID, MOTION_FRAME_SKIP, MOTION_COOLDOWN_SECONDS,
     MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT, MOTION_SENSITIVITY,
     MOTION_MIN_AREA, MOTION_RECOGNITION_DELAY_SEC, YOLO_CONF_THRESHOLD,
-    YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES
+    YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES,
+    RECONNECT_INITIAL_DELAY, RECONNECT_MAX_DELAY, HEALTH_TIMEOUT
 )
 
 # ===================== НАСТРОЙКИ =====================
@@ -179,125 +180,271 @@ async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
         logging.info("🔚 Все камеры остановлены")
 
 
+# async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
+#     """Оптимизированная детекция движения и объектов"""
+#     logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
+#     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+#
+#     if not cap.isOpened():
+#         logging.error(f"❌ Не удалось подключиться к {camera_name}")
+#         return
+#
+#     logging.info(f"✅ Соединение с {camera_name} установлено")
+#
+#     ret, frame1 = cap.read()
+#     ret2, frame2 = cap.read()
+#     if not ret or not ret2:
+#         logging.error(f"❌ Не удалось прочитать начальные кадры {camera_name}")
+#         cap.release()
+#         return
+#
+#     # Создаем детектор для данной камеры
+#     detector = MotionDetector(camera_name)
+#
+#     try:
+#         while True:
+#             # Проверяем состояние флага
+#             if not enabled_flag():
+#                 logging.info(f"⏹ Останавливаю {camera_name}, освобождаю поток")
+#                 break
+#
+#             # Читаем следующий кадр
+#             if not cap.grab():
+#                 logging.warning(f"⚠️ grab() вернул False для {camera_name}")
+#                 break
+#             ok, frame2 = cap.retrieve()
+#             if not ok:
+#                 logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
+#                 break
+#
+#             # Перестраховка: Убедитесь, что frame2 не пустой
+#             if frame2 is None or frame2.size == 0:
+#                 logging.warning(f"⚠️ Получен пустой кадр для {camera_name}")
+#                 continue
+#
+#             # Пропускаем кадры для снижения нагрузки
+#             if not detector.should_process_frame():
+#                 frame1 = frame2
+#                 continue
+#
+#             # Оптимизированная детекция движения
+#             motion_detected = detect_motion_optimized(frame1, frame2)
+#
+#             if motion_detected and detector.can_send_notification():
+#                 logging.info(f"🚨 Движение зафиксировано на {camera_name}")
+#
+#                 # Асинхронная обработка YOLO
+#                 try:
+#                     results = await process_yolo_async(frame2)
+#                     object_detected = False
+#
+#                     for box in results.boxes:
+#                         cls_id = int(box.cls[0])
+#                         class_name = results.names[cls_id]
+#                         conf = float(box.conf[0])
+#
+#                         if class_name in YOLO_TARGET_CLASSES and conf >= YOLO_CONF_THRESHOLD:
+#                             current_time = time.time()
+#                             if (current_time - detector.last_trigger_time) >= MOTION_RECOGNITION_DELAY_SEC:
+#                                 ts = now_ts()
+#                                 logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
+#
+#                                 _, buf = cv2.imencode(".jpg", frame2)
+#                                 image_bytes = io.BytesIO(buf)
+#
+#                                 caption = f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
+#
+#                                 # Используем функцию с cooldown если передана, иначе обычную отправку
+#                                 if send_alert_func:
+#                                     await send_alert_func(bot, ADMIN_ID, image_bytes, caption)
+#                                 else:
+#                                     await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
+#
+#                                 if MOTION_SAVE_FRAMES:
+#                                     fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
+#                                     cv2.imwrite(os.path.join(date_dir(), fname), frame2)
+#
+#                                 with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as f:
+#                                     csv.writer(f).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
+#
+#                                 detector.last_trigger_time = current_time
+#                                 detector.update_notification_time()
+#                                 object_detected = True
+#                                 break
+#                         else:
+#                             logging.info(
+#                                 f"YOLO не подтвердил: {class_name} ({conf:.2f}), "
+#                                 f"порог {YOLO_CONF_THRESHOLD}"
+#                             )
+#
+#                     # Если не нашли объекты, но движение есть - просто обновляем время cooldown
+#                     if not object_detected:
+#                         detector.update_notification_time()
+#
+#                 except Exception as e:
+#                     logging.error(f"Ошибка YOLO обработки для {camera_name}: {e}")
+#
+#             frame1 = frame2
+#
+#             # Небольшая пауза чтобы не нагружать CPU слишком сильно
+#             await asyncio.sleep(0.05)
+#
+#     except asyncio.CancelledError:
+#         logging.info(f"🛑 Задача камеры {camera_name} отменена")
+#         raise
+#     except Exception as e:
+#         logging.exception(f"Ошибка при обработке {camera_name}: {e}")
+#     finally:
+#         cap.release()
+#         logging.info(f"🔚 Поток {camera_name} завершён")
+#         # Уведомляем о завершении
+#         try:
+#             await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
+#         except Exception:
+#             pass
+
 async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
-    """Оптимизированная детекция движения и объектов"""
-    logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
-    cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
+    """Оптимизированная детекция движения и объектов с reconnect"""
+    logging.info(f"▶️ Запуск мониторинга для {camera_name} ({rtsp_url})...")
 
-    if not cap.isOpened():
-        logging.error(f"❌ Не удалось подключиться к {camera_name}")
-        return
+    retry_delay = RECONNECT_INITIAL_DELAY  # Начальная задержка retry
+    last_frame_time = time.time()  # Для health check
 
-    logging.info(f"✅ Соединение с {camera_name} установлено")
+    while enabled_flag():  # Внешний loop для retry
+        cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
 
-    ret, frame1 = cap.read()
-    ret2, frame2 = cap.read()
-    if not ret or not ret2:
-        logging.error(f"❌ Не удалось прочитать начальные кадры {camera_name}")
-        cap.release()
-        return
+        if not cap.isOpened():
+            logging.error(f"❌ Не удалось подключиться к {camera_name}. Retry через {retry_delay}s...")
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, RECONNECT_MAX_DELAY)  # Exponential backoff
+            continue
 
-    # Создаем детектор для данной камеры
-    detector = MotionDetector(camera_name)
+        logging.info(f"✅ Соединение с {camera_name} установлено")
+        retry_delay = RECONNECT_INITIAL_DELAY  # Сброс delay при успехе
 
-    try:
-        while True:
-            # Проверяем состояние флага
-            if not enabled_flag():
-                logging.info(f"⏹ Останавливаю {camera_name}, освобождаю поток")
-                break
+        ret, frame1 = cap.read()
+        ret2, frame2 = cap.read()
+        if not ret or not ret2:
+            logging.error(f"❌ Не удалось прочитать начальные кадры {camera_name}")
+            cap.release()
+            continue
 
-            # Читаем следующий кадр
-            if not cap.grab():
-                logging.warning(f"⚠️ grab() вернул False для {camera_name}")
-                break
-            ok, frame2 = cap.retrieve()
-            if not ok:
-                logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
-                break
+        detector = MotionDetector(camera_name)
+        last_frame_time = time.time()
 
-            # Перестраховка: Убедитесь, что frame2 не пустой
-            if frame2 is None or frame2.size == 0:
-                logging.warning(f"⚠️ Получен пустой кадр для {camera_name}")
-                continue
-
-            # Пропускаем кадры для снижения нагрузки
-            if not detector.should_process_frame():
-                frame1 = frame2
-                continue
-
-            # Оптимизированная детекция движения
-            motion_detected = detect_motion_optimized(frame1, frame2)
-
-            if motion_detected and detector.can_send_notification():
-                logging.info(f"🚨 Движение зафиксировано на {camera_name}")
-
-                # Асинхронная обработка YOLO
-                try:
-                    results = await process_yolo_async(frame2)
-                    object_detected = False
-
-                    for box in results.boxes:
-                        cls_id = int(box.cls[0])
-                        class_name = results.names[cls_id]
-                        conf = float(box.conf[0])
-
-                        if class_name in YOLO_TARGET_CLASSES and conf >= YOLO_CONF_THRESHOLD:
-                            current_time = time.time()
-                            if (current_time - detector.last_trigger_time) >= MOTION_RECOGNITION_DELAY_SEC:
-                                ts = now_ts()
-                                logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
-
-                                _, buf = cv2.imencode(".jpg", frame2)
-                                image_bytes = io.BytesIO(buf)
-
-                                caption = f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
-
-                                # Используем функцию с cooldown если передана, иначе обычную отправку
-                                if send_alert_func:
-                                    await send_alert_func(bot, ADMIN_ID, image_bytes, caption)
-                                else:
-                                    await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
-
-                                if MOTION_SAVE_FRAMES:
-                                    fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
-                                    cv2.imwrite(os.path.join(date_dir(), fname), frame2)
-
-                                with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as f:
-                                    csv.writer(f).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
-
-                                detector.last_trigger_time = current_time
-                                detector.update_notification_time()
-                                object_detected = True
-                                break
-                        else:
-                            logging.info(
-                                f"YOLO не подтвердил: {class_name} ({conf:.2f}), "
-                                f"порог {YOLO_CONF_THRESHOLD}"
-                            )
-
-                    # Если не нашли объекты, но движение есть - просто обновляем время cooldown
-                    if not object_detected:
-                        detector.update_notification_time()
-
-                except Exception as e:
-                    logging.error(f"Ошибка YOLO обработки для {camera_name}: {e}")
-
-            frame1 = frame2
-
-            # Небольшая пауза чтобы не нагружать CPU слишком сильно
-            await asyncio.sleep(0.05)
-
-    except asyncio.CancelledError:
-        logging.info(f"🛑 Задача камеры {camera_name} отменена")
-        raise
-    except Exception as e:
-        logging.exception(f"Ошибка при обработке {camera_name}: {e}")
-    finally:
-        cap.release()
-        logging.info(f"🔚 Поток {camera_name} завершён")
-        # Уведомляем о завершении
         try:
-            await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
-        except Exception:
-            pass
+            while enabled_flag() and cap.isOpened():
+                if not cap.grab():
+                    logging.warning(f"⚠️ grab() вернул False для {camera_name}")
+                    break
+
+                ok, frame2 = cap.retrieve()
+                if not ok:
+                    logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
+                    break
+
+                if frame2 is None or frame2.size == 0:
+                    logging.warning(f"⚠️ Получен пустой кадр для {camera_name}")
+                    continue
+
+                # Обновляем timestamp успешного кадра
+                last_frame_time = time.time()
+
+                # Health check: если кадры не обновляются > HEALTH_TIMEOUT, break для reconnect
+                if time.time() - last_frame_time > HEALTH_TIMEOUT:
+                    logging.warning(f"⚠️ Нет новых кадров >{HEALTH_TIMEOUT}s для {camera_name}. Reconnect...")
+                    break
+
+                # Пропускаем кадры для снижения нагрузки
+                if not detector.should_process_frame():
+                    frame1 = frame2
+                    continue
+
+                # Оптимизированная детекция движения
+                motion_detected = detect_motion_optimized(frame1, frame2)
+
+                if motion_detected and detector.can_send_notification():
+                    logging.info(f"🚨 Движение зафиксировано на {camera_name}")
+
+                    # Асинхронная обработка YOLO
+                    try:
+                        results = await process_yolo_async(frame2)
+                        object_detected = False
+
+                        for box in results.boxes:
+                            cls_id = int(box.cls[0])
+                            class_name = results.names[cls_id]
+                            conf = float(box.conf[0])
+
+                            if class_name in YOLO_TARGET_CLASSES and conf >= YOLO_CONF_THRESHOLD:
+                                current_time = time.time()
+                                if (current_time - detector.last_trigger_time) >= MOTION_RECOGNITION_DELAY_SEC:
+                                    ts = now_ts()
+                                    logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
+
+                                    _, buf = cv2.imencode(".jpg", frame2)
+                                    image_bytes = io.BytesIO(buf)
+
+                                    caption = f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
+
+                                    # Используем функцию с cooldown если передана, иначе обычную отправку
+                                    if send_alert_func:
+                                        await send_alert_func(bot, ADMIN_ID, image_bytes, caption)
+                                    else:
+                                        await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
+
+                                    if MOTION_SAVE_FRAMES:
+                                        fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
+                                        cv2.imwrite(os.path.join(date_dir(), fname), frame2)
+
+                                    with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as a:
+                                        csv.writer(a).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
+
+                                    detector.last_trigger_time = current_time
+                                    detector.update_notification_time()
+                                    object_detected = True
+                                    break
+                            else:
+                                logging.info(
+                                    f"YOLO не подтвердил: {class_name} ({conf:.2f}), "
+                                    f"порог {YOLO_CONF_THRESHOLD}"
+                                )
+
+                        # Если не нашли объекты, но движение есть - просто обновляем время cooldown
+                        if not object_detected:
+                            detector.update_notification_time()
+
+                    except Exception as e:
+                        logging.error(f"Ошибка YOLO обработки для {camera_name}: {e}")
+
+                frame1 = frame2
+
+                # Небольшая пауза чтобы не нагружать CPU слишком сильно
+                await asyncio.sleep(0.05)
+
+        except asyncio.CancelledError:
+            logging.info(f"🛑 Задача камеры {camera_name} отменена")
+            raise
+        except Exception as e:
+            logging.exception(f"Ошибка при обработке {camera_name}: {e}")
+
+        finally:
+            cap.release()
+            logging.info(f"🔌 Соединение с {camera_name} закрыто. Если флаг активен — retry.")
+            # Уведомление админу об обрыве (с cooldown, чтобы не спамить)
+            try:
+                await bot.send_message(chat_id=ADMIN_ID,
+                                       text=f"⚠️ Обрыв соединения с {camera_name}. Пытаюсь reconnect...")
+            except Exception:
+                pass
+
+        # Задержка перед retry, если не отмена
+        if enabled_flag():
+            await asyncio.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, RECONNECT_MAX_DELAY)
+
+    logging.info(f"🔚 Мониторинг {camera_name} завершён")
+    try:
+        await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
+    except Exception:
+        pass

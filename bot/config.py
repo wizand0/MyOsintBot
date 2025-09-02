@@ -54,9 +54,19 @@ MOTION_MIN_AREA = int(os.getenv('MOTION_MIN_AREA', '2000'))  # Увеличил�
 MOTION_RECOGNITION_DELAY_SEC = int(os.getenv('MOTION_RECOGNITION_DELAY_SEC', '4'))  # Задержка для YOLO
 
 # YOLO настройки
-YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.6'))  # Порог уверенности
+YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.5'))  # Порог уверенности
 YOLO_TARGET_CLASSES = os.getenv('YOLO_TARGET_CLASSES', 'person,cat,dog').split(',')  # Целевые классы
 
 # Прочие настройки
 MOTION_SAVE_FRAMES = os.getenv('MOTION_SAVE_FRAMES', 'True').lower() == 'true'
 MOTION_PLAYBACK_SPEED = int(os.getenv('MOTION_PLAYBACK_SPEED', '8'))  # Скорость воспроизведения
+
+# Настройки reconnect для RTSP
+RECONNECT_INITIAL_DELAY = int(os.getenv('RECONNECT_INITIAL_DELAY', '1'))  # Начальная задержка retry в секундах
+RECONNECT_MAX_DELAY = int(os.getenv('RECONNECT_MAX_DELAY', '60'))  # Максимальная задержка retry
+HEALTH_TIMEOUT = int(os.getenv('HEALTH_TIMEOUT', '30'))  # Таймаут без новых кадров для reconnect
+
+# .env
+# RECONNECT_INITIAL_DELAY=1
+# RECONNECT_MAX_DELAY=60
+# HEALTH_TIMEOUT=30
