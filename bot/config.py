@@ -54,7 +54,7 @@ MOTION_MIN_AREA = int(os.getenv('MOTION_MIN_AREA', '1000'))  # Увеличил�
 MOTION_RECOGNITION_DELAY_SEC = int(os.getenv('MOTION_RECOGNITION_DELAY_SEC', '4'))  # Задержка для YOLO
 
 # YOLO настройки
-YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.6'))  # Порог уверенности
+YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.45'))  # Порог уверенности
 YOLO_TARGET_CLASSES = os.getenv('YOLO_TARGET_CLASSES', 'person,cat,dog').split(',')  # Целевые классы
 
 # Прочие настройки

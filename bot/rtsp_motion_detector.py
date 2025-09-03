@@ -371,6 +371,15 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                         results = await process_yolo_async(frame2)
                         object_detected = False
 
+                        # Добавьте логирование всех обнаруженных объектов
+                        if results.boxes:
+                            logging.info(f"YOLO обнаружил {len(results.boxes)} объектов")
+                            for box in results.boxes:
+                                cls_id = int(box.cls[0])
+                                class_name = results.names[cls_id]
+                                conf = float(box.conf[0])
+                                logging.info(f"Обнаружен объект: {class_name} ({conf:.2f})")
+
                         for box in results.boxes:
                             cls_id = int(box.cls[0])
                             class_name = results.names[cls_id]
