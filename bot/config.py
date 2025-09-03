@@ -50,11 +50,11 @@ MOTION_RESIZE_HEIGHT = int(os.getenv('MOTION_RESIZE_HEIGHT', '360'))  # Высо
 
 # Чувствительность детекции
 MOTION_SENSITIVITY = int(os.getenv('MOTION_SENSITIVITY', '25'))  # Порог чувствительности
-MOTION_MIN_AREA = int(os.getenv('MOTION_MIN_AREA', '2000'))  # Увеличили минимальную площадь
+MOTION_MIN_AREA = int(os.getenv('MOTION_MIN_AREA', '1000'))  # Увеличили минимальную площадь
 MOTION_RECOGNITION_DELAY_SEC = int(os.getenv('MOTION_RECOGNITION_DELAY_SEC', '4'))  # Задержка для YOLO
 
 # YOLO настройки
-YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.5'))  # Порог уверенности
+YOLO_CONF_THRESHOLD = float(os.getenv('YOLO_CONF_THRESHOLD', '0.6'))  # Порог уверенности
 YOLO_TARGET_CLASSES = os.getenv('YOLO_TARGET_CLASSES', 'person,cat,dog').split(',')  # Целевые классы
 
 # Прочие настройки
