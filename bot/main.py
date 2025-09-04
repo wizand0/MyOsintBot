@@ -80,6 +80,12 @@ def main():
     # Также можно добавить команду для статуса (опционально)
     application.add_handler(CommandHandler("motion_status", motion_status))
 
+    # Обработчик для показа логов контейнера
+    application.add_handler(
+        MessageHandler(filters.TEXT & filters.Text(["📋 Container Logs", "container logs", "Container Logs"]),
+                       show_container_logs)
+    )
+
     # Обработка всех текстовых сообщений (должен идти ПОСЛЕ специализированных обработчиков)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
@@ -93,11 +99,7 @@ def main():
 
     application.add_handler(stats_cmd)
 
-    # Обработчик для показа логов контейнера
-    application.add_handler(
-        MessageHandler(filters.TEXT & filters.Text(["📋 Container Logs", "container logs", "Container Logs"]),
-                       show_container_logs)
-    )
+
 
     # Планируем единоразовый job на 5‑й секунде
     application.job_queue.run_once(on_startup_callback, when=5)
