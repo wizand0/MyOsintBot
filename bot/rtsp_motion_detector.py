@@ -46,7 +46,15 @@ def now_ts():
 def date_dir():
     d = time.strftime("%Y%m%d")
     p = os.path.join(FRAMES_DIR, d)
+    logging.info(f"📂 Создание папки: {p}")
+    logging.info(f"📂 Базовая папка существует: {os.path.exists(FRAMES_DIR)}")
+    logging.info(
+        f"📂 Можно писать в базовую папку: {os.access(FRAMES_DIR, os.W_OK) if os.path.exists(FRAMES_DIR) else 'N/A'}")
+
     os.makedirs(p, exist_ok=True)
+    logging.info(f"📂 Папка создана/существует: {os.path.exists(p)}")
+    logging.info(f"📂 Можно писать в папку: {os.access(p, os.W_OK) if os.path.exists(p) else 'N/A'}")
+
     return p
 
 
@@ -138,6 +146,23 @@ async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
     """Основная точка входа с оптимизациями - запускает все камеры параллельно"""
     check_dependencies(bot)
 
+    logging.info(f"🔧 MOTION_SAVE_FRAMES = {MOTION_SAVE_FRAMES}")
+    logging.info(f"🔧 FRAMES_DIR = {FRAMES_DIR}")
+    logging.info(f"🔧 Папка существует: {os.path.exists(FRAMES_DIR)}")
+    logging.info(f"🔧 Можно писать в папку: {os.access(FRAMES_DIR, os.W_OK) if os.path.exists(FRAMES_DIR) else 'N/A'}")
+
+    # Тестовое создание файла
+    try:
+        test_file = os.path.join(FRAMES_DIR, "test_write.txt")
+        with open(test_file, "w") as f:
+            f.write("test")
+        logging.info(f"✅ Тестовый файл создан: {test_file}")
+        if os.path.exists(test_file):
+            os.remove(test_file)
+            logging.info("✅ Тестовый файл удален")
+    except Exception as e:
+        logging.error(f"❌ Ошибка создания тестового файла: {e}")
+
     import pathlib
     camera_file = pathlib.Path(__file__).parent / "cameras.json"
     logging.info(f"camera_file: {camera_file}")
@@ -179,129 +204,6 @@ async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
         active_camera_tasks.clear()
         logging.info("🔚 Все камеры остановлены")
 
-
-# async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
-#     """Оптимизированная детекция движения и объектов"""
-#     logging.info(f"▶️ Подключаюсь к {camera_name} ({rtsp_url})...")
-#     cap = cv2.VideoCapture(rtsp_url, cv2.CAP_FFMPEG)
-#
-#     if not cap.isOpened():
-#         logging.error(f"❌ Не удалось подключиться к {camera_name}")
-#         return
-#
-#     logging.info(f"✅ Соединение с {camera_name} установлено")
-#
-#     ret, frame1 = cap.read()
-#     ret2, frame2 = cap.read()
-#     if not ret or not ret2:
-#         logging.error(f"❌ Не удалось прочитать начальные кадры {camera_name}")
-#         cap.release()
-#         return
-#
-#     # Создаем детектор для данной камеры
-#     detector = MotionDetector(camera_name)
-#
-#     try:
-#         while True:
-#             # Проверяем состояние флага
-#             if not enabled_flag():
-#                 logging.info(f"⏹ Останавливаю {camera_name}, освобождаю поток")
-#                 break
-#
-#             # Читаем следующий кадр
-#             if not cap.grab():
-#                 logging.warning(f"⚠️ grab() вернул False для {camera_name}")
-#                 break
-#             ok, frame2 = cap.retrieve()
-#             if not ok:
-#                 logging.warning(f"⚠️ retrieve() вернул False для {camera_name}")
-#                 break
-#
-#             # Перестраховка: Убедитесь, что frame2 не пустой
-#             if frame2 is None or frame2.size == 0:
-#                 logging.warning(f"⚠️ Получен пустой кадр для {camera_name}")
-#                 continue
-#
-#             # Пропускаем кадры для снижения нагрузки
-#             if not detector.should_process_frame():
-#                 frame1 = frame2
-#                 continue
-#
-#             # Оптимизированная детекция движения
-#             motion_detected = detect_motion_optimized(frame1, frame2)
-#
-#             if motion_detected and detector.can_send_notification():
-#                 logging.info(f"🚨 Движение зафиксировано на {camera_name}")
-#
-#                 # Асинхронная обработка YOLO
-#                 try:
-#                     results = await process_yolo_async(frame2)
-#                     object_detected = False
-#
-#                     for box in results.boxes:
-#                         cls_id = int(box.cls[0])
-#                         class_name = results.names[cls_id]
-#                         conf = float(box.conf[0])
-#
-#                         if class_name in YOLO_TARGET_CLASSES and conf >= YOLO_CONF_THRESHOLD:
-#                             current_time = time.time()
-#                             if (current_time - detector.last_trigger_time) >= MOTION_RECOGNITION_DELAY_SEC:
-#                                 ts = now_ts()
-#                                 logging.info(f"✅ {camera_name}: {class_name} ({conf:.2f}), {ts}")
-#
-#                                 _, buf = cv2.imencode(".jpg", frame2)
-#                                 image_bytes = io.BytesIO(buf)
-#
-#                                 caption = f"{camera_name}: {class_name} ({conf:.2f}) {ts}"
-#
-#                                 # Используем функцию с cooldown если передана, иначе обычную отправку
-#                                 if send_alert_func:
-#                                     await send_alert_func(bot, ADMIN_ID, image_bytes, caption)
-#                                 else:
-#                                     await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
-#
-#                                 if MOTION_SAVE_FRAMES:
-#                                     fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
-#                                     cv2.imwrite(os.path.join(date_dir(), fname), frame2)
-#
-#                                 with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as f:
-#                                     csv.writer(f).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
-#
-#                                 detector.last_trigger_time = current_time
-#                                 detector.update_notification_time()
-#                                 object_detected = True
-#                                 break
-#                         else:
-#                             logging.info(
-#                                 f"YOLO не подтвердил: {class_name} ({conf:.2f}), "
-#                                 f"порог {YOLO_CONF_THRESHOLD}"
-#                             )
-#
-#                     # Если не нашли объекты, но движение есть - просто обновляем время cooldown
-#                     if not object_detected:
-#                         detector.update_notification_time()
-#
-#                 except Exception as e:
-#                     logging.error(f"Ошибка YOLO обработки для {camera_name}: {e}")
-#
-#             frame1 = frame2
-#
-#             # Небольшая пауза чтобы не нагружать CPU слишком сильно
-#             await asyncio.sleep(0.05)
-#
-#     except asyncio.CancelledError:
-#         logging.info(f"🛑 Задача камеры {camera_name} отменена")
-#         raise
-#     except Exception as e:
-#         logging.exception(f"Ошибка при обработке {camera_name}: {e}")
-#     finally:
-#         cap.release()
-#         logging.info(f"🔚 Поток {camera_name} завершён")
-#         # Уведомляем о завершении
-#         try:
-#             await bot.send_message(chat_id=ADMIN_ID, text=f"⏹ {camera_name}: поток остановлен")
-#         except Exception:
-#             pass
 
 async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enabled_flag, send_alert_func=None):
     """Оптимизированная детекция движения и объектов с reconnect"""
@@ -402,9 +304,39 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                                     else:
                                         await bot.send_photo(chat_id=ADMIN_ID, photo=image_bytes, caption=caption)
 
+                                    # if MOTION_SAVE_FRAMES:
+                                    #     fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
+                                    #     cv2.imwrite(os.path.join(date_dir(), fname), frame2)
+
                                     if MOTION_SAVE_FRAMES:
                                         fname = f"{camera_name}_{ts.replace(':', '-')}_{class_name}.jpg"
-                                        cv2.imwrite(os.path.join(date_dir(), fname), frame2)
+                                        save_dir = date_dir()
+                                        save_path = os.path.join(save_dir, fname)
+
+                                        logging.info(f"🖼️ Попытка сохранения кадра:")
+                                        logging.info(f"   📁 Директория: {save_dir}")
+                                        logging.info(f"   📁 Существует: {os.path.exists(save_dir)}")
+                                        logging.info(
+                                            f"   📁 Можно писать: {os.access(save_dir, os.W_OK) if os.path.exists(save_dir) else 'N/A'}")
+                                        logging.info(f"   📄 Файл: {fname}")
+
+                                        try:
+                                            success = cv2.imwrite(save_path, frame2)
+                                            if success:
+                                                logging.info(f"✅ Кадр успешно сохранен: {save_path}")
+                                                # Проверим что файл действительно создался
+                                                if os.path.exists(save_path):
+                                                    file_size = os.path.getsize(save_path)
+                                                    logging.info(f"📊 Размер файла: {file_size} bytes")
+                                                else:
+                                                    logging.error("❌ Файл не был создан после cv2.imwrite!")
+                                            else:
+                                                logging.error("❌ cv2.imwrite вернул False - ошибка сохранения")
+
+                                        except Exception as e:
+                                            logging.error(f"❌ Ошибка при сохранении кадра: {e}")
+                                            import traceback
+                                            logging.error(traceback.format_exc())
 
                                     with open(OUTPUT_FILE, "a", newline="", encoding="utf-8") as a:
                                         csv.writer(a).writerow([camera_name, ts, class_name, f"{conf:.2f}"])
