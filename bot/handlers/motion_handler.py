@@ -133,3 +133,34 @@ async def motion_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Функция для проверки состояния (если нужна из других модулей)
 def is_motion_enabled(context: ContextTypes.DEFAULT_TYPE) -> bool:
     return context.bot_data.get('motion_enabled', False)
+
+
+async def show_container_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Показать последние логи контейнера"""
+    user_id = update.effective_user.id
+    if user_id != ADMIN_ID:
+        await update.message.reply_text("❌ Нет прав для этой команды")
+        return
+
+    try:
+        # Получаем последние 50 строк лога
+        log_lines = []
+        try:
+            with open('motion_debug.log', 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                log_lines = lines[-50:]  # Последние 50 строк
+        except FileNotFoundError:
+            log_lines = ["Лог-файл не найден"]
+
+        log_text = "".join(log_lines)
+
+        # Разбиваем на части если лог слишком большой для Telegram
+        if len(log_text) > 4000:
+            log_text = log_text[-4000:]  # Берем последние 4000 символов
+
+        await update.message.reply_text(f"📋 Последние логи:\n```\n{log_text}\n```",
+                                        parse_mode='Markdown')
+
+    except Exception as e:
+        logging.error(f"Ошибка чтения логов: {e}")
+        await update.message.reply_text(f"❌ Ошибка чтения логов: {e}")

@@ -67,7 +67,8 @@ def build_menu_keyboard(user_lang: str, user_id: int) -> ReplyKeyboardMarkup:
                 KeyboardButton(text="Motion OFF")
             ],
             [
-                KeyboardButton(text="📊 Motion Status")  # Новая кнопка для статуса
+                KeyboardButton(text="📊 Motion Status"),
+                KeyboardButton(text="📋 Container Logs")
             ]
         ]
     # Формируем клавиатуру для авторизованного пользователя

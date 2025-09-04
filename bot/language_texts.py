@@ -48,6 +48,7 @@ texts = {
         'db_stats': 'Статистика БД',
         'server_stats': 'Характеристики сервера',
         'user_requests': 'Запросы пользователей',
+        'container_logs': '📋 Логи контейнера',
         "admin_instruction_text": (
         "— /approve 123456789 – добавить пользователя\n"
         "— /delete 123456789 – удалить пользователя\n"
@@ -104,6 +105,7 @@ texts = {
         'db_stats': 'DB Statistics',
         'server_stats': 'Server Statistics',
         'user_requests': 'User Requests',
+        'container_logs': '📋 Container Logs',
         "admin_instruction_text": (
         "👮‍♂️ Админ‑инструкция:\n"
         "— /approve 123456789 – approve user\n"

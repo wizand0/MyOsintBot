@@ -17,7 +17,7 @@ from .handlers.user_handlers import message_handler
 from .config import TOKEN
 from .utils import notify_startup, notify_startup_try_if_no_internet
 from bot.handlers.common_handlers import on_motion_on_text, on_motion_off_text
-from bot.handlers.motion_handler import motion_on, motion_off, motion_status
+from bot.handlers.motion_handler import motion_on, motion_off, motion_status, show_container_logs
 
 
 # from .handlers import start, message_handler, approve_user, language_selection_handler, change_language_handler, \
@@ -92,6 +92,12 @@ def main():
     application.add_handler(CallbackQueryHandler(callback_handler))
 
     application.add_handler(stats_cmd)
+
+    # Обработчик для показа логов контейнера
+    application.add_handler(
+        MessageHandler(filters.TEXT & filters.Text(["📋 Container Logs", "container logs", "Container Logs"]),
+                       show_container_logs)
+    )
 
     # Планируем единоразовый job на 5‑й секунде
     application.job_queue.run_once(on_startup_callback, when=5)
