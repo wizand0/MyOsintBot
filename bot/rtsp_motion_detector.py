@@ -14,8 +14,11 @@ from bot.config import (
     MOTION_RESIZE_WIDTH, MOTION_RESIZE_HEIGHT, MOTION_SENSITIVITY,
     MOTION_MIN_AREA, MOTION_RECOGNITION_DELAY_SEC, YOLO_CONF_THRESHOLD,
     YOLO_TARGET_CLASSES, MOTION_SAVE_FRAMES,
-    RECONNECT_INITIAL_DELAY, RECONNECT_MAX_DELAY, HEALTH_TIMEOUT
+    RECONNECT_INITIAL_DELAY, RECONNECT_MAX_DELAY, HEALTH_TIMEOUT, DAYS_TO_KEEP_FILES
 )
+import glob
+from datetime import datetime, timedelta
+
 
 # ===================== НАСТРОЙКИ =====================
 OUTPUT_FILE = "rtsp_motions_log.csv"
@@ -28,6 +31,12 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
     handlers=[logging.StreamHandler()]
 )
+
+file_handler = logging.FileHandler("motion_debug.log", encoding="utf-8")
+file_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+
+logger = logging.getLogger()
+logger.addHandler(file_handler)
 
 os.makedirs(FRAMES_DIR, exist_ok=True)
 
@@ -42,6 +51,19 @@ active_camera_tasks = []
 def now_ts():
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
+
+def cleanup_old_frames(days_to_keep=7):
+    """Удаляет файлы старше указанного количества дней"""
+    try:
+        current_time = time.time()
+        for frame_file in glob.glob(os.path.join(FRAMES_DIR, "**", "*.jpg"), recursive=True):
+            file_time = os.path.getctime(frame_file)
+            if current_time - file_time > days_to_keep * 86400:  # days to seconds
+                os.remove(frame_file)
+                logging.info(f"🗑️ Удален старый файл: {frame_file}")
+
+    except Exception as e:
+        logging.error(f"❌ Ошибка при очистке старых файлов: {e}")
 
 def date_dir():
     d = time.strftime("%Y%m%d")
@@ -145,6 +167,8 @@ class MotionDetector:
 async def run_rtsp_detector(bot, enabled_flag: callable, send_alert_func=None):
     """Основная точка входа с оптимизациями - запускает все камеры параллельно"""
     check_dependencies(bot)
+
+    cleanup_old_frames(days_to_keep=DAYS_TO_KEEP_FILES)
 
     logging.info(f"🔧 MOTION_SAVE_FRAMES = {MOTION_SAVE_FRAMES}")
     logging.info(f"🔧 FRAMES_DIR = {FRAMES_DIR}")
@@ -281,6 +305,9 @@ async def detect_motion_and_objects_optimized(bot, camera_name, rtsp_url, enable
                                 class_name = results.names[cls_id]
                                 conf = float(box.conf[0])
                                 logging.info(f"Обнаружен объект: {class_name} ({conf:.2f})")
+
+                        else:
+                            logging.info(f"YOLO не подтвердил движение")
 
                         for box in results.boxes:
                             cls_id = int(box.cls[0])
