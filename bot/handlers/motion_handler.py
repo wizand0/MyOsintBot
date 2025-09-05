@@ -7,6 +7,7 @@ from bot.config import ADMIN_ID, MOTION_COOLDOWN_SECONDS, MOTION_FRAME_SKIP, MOT
 from bot.rtsp_motion_detector import run_rtsp_detector
 import logging
 
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 
 # Глобальный словарь для отслеживания cooldown уведомлений

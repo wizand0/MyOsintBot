@@ -66,6 +66,7 @@ RECONNECT_INITIAL_DELAY = int(os.getenv('RECONNECT_INITIAL_DELAY', '1'))  # На
 RECONNECT_MAX_DELAY = int(os.getenv('RECONNECT_MAX_DELAY', '60'))  # Максимальная задержка retry
 HEALTH_TIMEOUT = int(os.getenv('HEALTH_TIMEOUT', '30'))  # Таймаут без новых кадров для reconnect
 
+DAYS_TO_KEEP_FILES=60 # Сколько хранить сохраненные кадры с движением
 # .env
 # RECONNECT_INITIAL_DELAY=1
 # RECONNECT_MAX_DELAY=60

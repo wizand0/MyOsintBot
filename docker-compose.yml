@@ -17,10 +17,11 @@ services:
       - HOST_LAN_IP=${YOUR_HOST_IP}
       - SPHINX_HOST=sphinx
       - SPHINX_PORT=9306
+      - TZ=Europe/Moscow
     volumes:
       # Логи и данные детектора движений
       - ./bot/motion_debug.log:/app/bot/motion_debug.log
-      - ./bot/rtsp_motion_frames:/app/bot/rtsp_motion_frames
+      - rtsp_motion_data:/app/bot/rtsp_motion_frames
       - ./bot/rtsp_motions_log.csv:/app/bot/rtsp_motions_log.csv
       # Конфиги камер и пользователей — на хосте
       - ./bot/cameras.json:/app/bot/cameras.json:ro
@@ -30,6 +31,9 @@ services:
       - /proc/loadavg:/host_loadavg:ro
       - /proc/uptime:/host_uptime:ro
       # - /sys/class/hwmon:/host_sys/class/hwmon:ro   # для Linux
+      # Монтирование временных файлов (добавьте эти строки)
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     networks:
       - app-network
     logging:
@@ -86,6 +90,7 @@ volumes:
   sphinx-data:
   sphinx-run:
   sphinx-logs:
+  rtsp_motion_data:
 
 networks:
   app-network:
